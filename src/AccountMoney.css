@@ -11,8 +11,8 @@
   border-radius: 45px;
   transition: background-color 0.3s ease;
   position: fixed;
-  top:22px;
-  left: 20px;
+  top:28px;
+  right: 87px;
   align-items: center; /* Centrar verticalmente */
   width: 43px; /* Ajusta el ancho según sea necesario */
   height: 43px;
