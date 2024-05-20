@@ -58,8 +58,7 @@ const GameStatusButton: React.FC = () => {
       const response = await fetch(`https://api-gateway-z0qe.onrender.com/game/status/${gameId}`, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
       });
 
@@ -67,10 +66,12 @@ const GameStatusButton: React.FC = () => {
 
       if (!response.ok) {
         toast.error(responseData.detail);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       setGameStatus(responseData);
       setModalOpen(true);
+
     } catch (error) {
       console.error('Error getting game status:', error);
     }
