@@ -1,0 +1,72 @@
+
+.wallet-button {
+  background-color: #e6b800;
+  color: rgb(0, 0, 0);
+  padding: 12px 12px;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  font-size: 30px;
+  cursor: pointer;
+  border-radius: 45px;
+  transition: background-color 0.3s ease;
+  position: fixed;
+  top:22px;
+  left: 20px;
+  align-items: center; /* Centrar verticalmente */
+  width: 43px; /* Ajusta el ancho según sea necesario */
+  height: 43px;
+}
+
+.wallet-button:hover {
+  background-color: #1a1d1b;
+  color: white;
+}
+
+.wallet-button svg {
+  margin-right: 12px;
+}
+
+.wallet-modal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  right: auto;
+  bottom: auto;
+  margin-right: -50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  width: 300px;
+  max-width: 80%;
+}
+
+.wallet-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+}
+
+.close-button {
+  background-color: red;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+  border-radius: 4px;
+  float: right;
+}
+
+.wallet-data {
+  text-align: center;
+}
+
+.error-message {
+  color: red;
+  text-align: center;
+}

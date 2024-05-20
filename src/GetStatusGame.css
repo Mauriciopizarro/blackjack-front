@@ -1,0 +1,180 @@
+.game-status-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #292832;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(97, 94, 94, 0.2);
+  opacity: 0.9;
+  width: 80%; /* Aumenta el ancho del modal al 80% de la pantalla */
+  max-width: 1200px; /* Limita el ancho máximo del modal */
+  padding: 20px; /* Agrega un padding interno */
+  box-sizing: border-box; /* Asegura que el padding no aumente el tamaño total del modal */
+}
+
+.game-hub {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+  gap: 20px;
+  flex-wrap: wrap; /* Permite que las secciones se ajusten en pantallas más pequeñas */
+}
+
+.players-section, .dealer-section {
+  background-color: #1c1c1c;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+  flex: 1 1 45%; /* Permite que las secciones se redimensionen */
+  min-width: 300px; /* Establece un ancho mínimo */
+  color: white;
+}
+
+.section-title {
+  font-size: 20px;
+  margin-bottom: 20px;
+  text-align: center;
+  color: #ffcc00;
+}
+
+.cards-container {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 10px 0;
+  font-size: 50px;
+}
+
+.player-info, .dealer-info {
+  background-color: #2a2a2a;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.player-name, .dealer-name {
+  font-size: 20px;
+  margin-bottom: 10px;
+  color: #ffffff;
+  text-align: center;
+}
+
+.player-status p, .dealer-status p {
+  margin: 5px 0;
+}
+
+.player-status span, .dealer-status span {
+  font-weight: bold;
+  color: #ffcc00;
+}
+
+.deal-card-button, .bet-button, .stand-button {
+  margin-left: 7px;
+  padding: 10px 20px;
+  background-color: #ffcc00;
+  color: #1c1c1c;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.deal-card-button:hover, .bet-button:hover, .stand-button:hover {
+  background-color: #e6b800;
+}
+
+.createButton2 {
+  padding: 10px 20px;
+  top: 23px;
+  right: 734px;
+  position: fixed;
+  background-color: #e6b800;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  color: black;
+  font-size: 18px;
+}
+
+.createButton2:hover {
+  background-color: #0f0f0f;
+  color: white;
+}
+
+.bet-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #292832;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  width: 300px;
+  color: white;
+}
+
+.bet-modal-content {
+  position: relative;
+}
+
+
+.bet-modal .close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  cursor: pointer;
+  font-size: 24px;
+  color: #ffcc00;
+}
+
+.bet-modal input {
+  margin: 10px 0;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  width: 100%;
+}
+
+.submit-bet-button {
+  padding: 10px 20px;
+  background-color: #ffcc00;
+  color: #1c1c1c;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.submit-bet-button:hover {
+  background-color: #e6b800;
+}
+
+.game-status-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgb(35, 34, 34);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+}
+
+.game-status-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+

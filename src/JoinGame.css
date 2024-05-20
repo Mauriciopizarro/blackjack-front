@@ -1,0 +1,64 @@
+/* JoinGame.css */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modalJoin {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 400px;
+  width: 100%;
+  position: relative; /* Añadir posición relativa para elementos hijos absolutos */
+}
+
+.join-game-input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.close-button {
+  background-color: red;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+  border-radius: 4px;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.join-game-confirm-button {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.join-game-button {
+  border: none;
+  font-size: 18px;
+  border-radius: 4px;
+  background-color: #e6b800;
+  color: black;
+  cursor: pointer;
+  position: fixed;
+  top: 22px;
+  right: 441px;
+}
+
+.join-game-button:hover {
+  background-color: #0f0f0f;
+  color: white;
+}

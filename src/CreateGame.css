@@ -1,0 +1,94 @@
+/* Estilos generales para el modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .button-container {
+    display: flex;
+    justify-content: space-between; /* Esto distribuirá los botones horizontalmente */
+  }
+  
+  .game-info-modal {
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    width: 100%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .game-info-modal p {
+    margin: 10px 0;
+  }
+  
+  /* Estilo específico para la alineación de los botones en game-info-modal */
+  .game-info-modal-buttons {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+  }
+  
+  .game-info-modal-buttons button {
+    margin: 0 10px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  
+  .createButton {
+    padding: 10px 20px;
+    position: fixed;
+    top: 22px;
+    right: 577px;
+    font-size: 18px;
+    background-color: #e6b800;
+    color: black;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .createButton:hover {
+    background-color: black;
+    color: white;
+  }
+
+  .closebutton{
+    margin-left: 10px;
+  }
+  
+  .close-error {
+    background-color: red;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .error-message-container {
+    background-color: #f44336;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    margin: 20px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  

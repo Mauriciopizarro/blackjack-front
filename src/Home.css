@@ -1,0 +1,15 @@
+
+.home {
+    font-family: Arial, sans-serif;
+    font-size: 30px;
+    color: white;
+}
+
+.buttons {
+    display: flex;
+    justify-content: center;
+}
+
+.buttons > * {
+    margin: 0 5px; /* Ajusta el espacio entre los botones */
+}
