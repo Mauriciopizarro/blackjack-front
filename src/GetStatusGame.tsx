@@ -35,7 +35,7 @@ const cardImages: { [key: string]: string } = {
   '6': 'https://cdn.pixabay.com/photo/2012/04/11/13/58/six-28340_1280.png',
   '7': 'https://cdn.pixabay.com/photo/2012/04/11/13/54/seven-28328_1280.png',
   '8': 'https://cdn.pixabay.com/photo/2012/04/11/13/43/diamonds-28289_1280.png',
-  '9': 'https://cdn.pixabay.com/photo/2012/04/11/13/43/diamonds-28289_1280.png',
+  '9': 'https://cdn.pixabay.com/photo/2012/04/11/13/43/diamonds-28290_1280.png',
   '10': 'https://cdn.pixabay.com/photo/2012/04/11/13/57/ten-28335_1280.png',
   'J': 'https://cdn.pixabay.com/photo/2012/04/11/14/05/hearts-28358_1280.png',
   'Q': 'https://cdn.pixabay.com/photo/2012/04/11/13/57/clubs-28334_1280.png',
