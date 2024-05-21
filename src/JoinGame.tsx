@@ -49,6 +49,7 @@ const JoinGame: React.FC = () => {
           setGameId('');
           setIsOpen(false);
           setErrorMessage('');
+          toast.success(`You joined the game successfully ID ${gameId}`);
         }
       } catch (error) {
         setErrorMessage(String(error));
