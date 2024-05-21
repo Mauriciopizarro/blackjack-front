@@ -15,6 +15,13 @@ const JoinGame: React.FC = () => {
     setIsOpen(true);
   };
 
+  function setGameInCookies(name: string, value: string) {
+    const expires = new Date();
+    expires.setTime(expires.getTime() + 1 * 24 * 60 * 60 * 1000);
+    const cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+    document.cookie = cookie;
+  }
+
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setGameId(event.target.value);
   };
@@ -38,6 +45,7 @@ const JoinGame: React.FC = () => {
         if (response.status !== 200) {
           toast.error(responseData.detail);
         } else {
+          setGameInCookies("gameId", gameId)
           setGameId('');
           setIsOpen(false);
           setErrorMessage('');
