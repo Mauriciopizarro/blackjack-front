@@ -50,10 +50,10 @@ const GameStatusButton: React.FC = () => {
   const [betAmount, setBetAmount] = useState('');
   const [gameStatus, setGameStatus] = useState<GameStatus | null>(null);
   const token = getTokenFromCookies();
-  const gameId = getGameFromCookies();
   const playerId = getUserIdFromCookies();
 
   const handleClick = async () => {
+    const gameId = getGameFromCookies();
     try {
       const response = await fetch(`https://api-gateway-z0qe.onrender.com/game/status/${gameId}`, {
         method: 'GET',
@@ -78,6 +78,7 @@ const GameStatusButton: React.FC = () => {
   };
 
   const handleDealCard = async () => {
+    const gameId = getGameFromCookies();
     try {
       const response = await fetch(`https://api-gateway-z0qe.onrender.com/game/deal_card/${gameId}`, {
         method: 'POST',
@@ -116,6 +117,7 @@ const GameStatusButton: React.FC = () => {
 
 
   const handleStand = async () => {
+    const gameId = getGameFromCookies();
     try {
       const response = await fetch(`https://api-gateway-z0qe.onrender.com/game/stand/${gameId}`, {
         method: 'POST',
@@ -154,6 +156,7 @@ const GameStatusButton: React.FC = () => {
 
 
   const handleBetSubmit = async () => {
+    const gameId = getGameFromCookies();
     try {
       const response = await fetch(`https://api-gateway-z0qe.onrender.com/game/make_bet/${gameId}`, {
         method: 'POST',
