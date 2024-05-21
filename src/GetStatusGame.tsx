@@ -215,45 +215,47 @@ const GameStatusButton: React.FC = () => {
         >
           <button className="close-button" onClick={() => setModalOpen(false)}>&times;</button>
           {gameStatus ? (
-              <div className="game-hub">
-                <div className="dealer-section">
-                  <h3 className="section-title">Croupier</h3>
-                  <div className="dealer-info">
-                    <h4 className="dealer-name">{gameStatus.croupier.name}</h4>
-                    <div className="dealer-status">
-                      <p style={{ fontSize: '20px' }}>Status: <span>{gameStatus.croupier.status}</span></p>
-                      <p style={{ fontSize: '20px' }}>Total Points: <span>{gameStatus.croupier.total_points.join(', ')}</span></p>
-                      <div className="cards-container">
-                        {renderCards(gameStatus.croupier.cards)}
-                      </div>
+            <div className="game-hub">
+              <div className="dealer-section">
+                <h3 className="section-title">Croupier</h3>
+                <div className="dealer-info">
+                  <h4 className="dealer-name">{gameStatus.croupier.name}</h4>
+                  <div className="dealer-status">
+                    <p style={{ fontSize: '20px' }}>Status: <span>{gameStatus.croupier.status}</span></p>
+                    <p style={{ fontSize: '20px' }}>Total Points: <span>{gameStatus.croupier.total_points.join(', ')}</span></p>
+                    <div className="cards-container">
+                      {renderCards(gameStatus.croupier.cards)}
                     </div>
                   </div>
                 </div>
-                <div className="players-section">
-                  <h3 className="section-title">Players</h3>
-                  {gameStatus.players.map(player => (
-                    <div key={player.id} className="player-info">
-                      <h4 className="player-name">{player.name}</h4>
-                      <div className="player-status">
-                        <p style={{ fontSize: '20px' }}>Status: <span>{player.status}</span></p>
-                        <p style={{ fontSize: '20px' }}>Total Points: <span>{player.total_points.join(', ')}</span></p>
-                        <p style={{ fontSize: '20px' }}>Bet Amount: <span>{player.bet_amount}</span></p>
-                      </div>
-                      <div className="cards-container">
-                        {renderCards(player.cards)}
-                      </div>
+              </div>
+              <div className="players-section">
+                <h3 className="section-title">Players</h3>
+                {gameStatus.players.map(player => (
+                  <div key={player.id} className="player-info">
+                    <h4 className="player-name">{player.name}</h4>
+                    <div className="player-status">
+                      <p style={{ fontSize: '20px' }}>Status: <span>{player.status}</span></p>
+                      <p style={{ fontSize: '20px' }}>Total Points: <span>{player.total_points.join(', ')}</span></p>
+                      <p style={{ fontSize: '20px' }}>Bet Amount: <span>{player.bet_amount}</span></p>
+                    </div>
+                    <div className="cards-container">
+                      {renderCards(player.cards)}
+                    </div>
+                    {player.id === playerId && (
                       <div className="player-buttons">
                         <button className="deal-card-button" onClick={handleDealCard}>Deal Card</button>
                         <button className="stand-button" onClick={handleStand}>Stand</button>
                         <button className="bet-button" onClick={() => setBetModalOpen(true)}>Make a Bet</button>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    )}
+                  </div>
+                ))}
               </div>
-            ) : (
-              <p>Loading...</p>
-            )}
+            </div>
+          ) : (
+          <div>Loading...</div>
+        )}
         </Modal>
         {betModalOpen && (
           <div className="bet-modal">
