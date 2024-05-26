@@ -5,8 +5,11 @@ import { getTokenFromCookies } from './utils/GetTokenFromCookies';
 import { getGameFromCookies } from './utils/GetGameFromCookies';
 import { getUserIdFromCookies } from './utils/GetUserIdFromCookies';
 import './GetStatusGame.css';
+import io from 'socket.io-client';
 
 Modal.setAppElement('#root');
+
+const socket = io('http://localhost:3000');
 
 interface GameStatus {
   croupier: {
@@ -105,6 +108,10 @@ const GameStatusButton: React.FC = () => {
 
       const updatedData = await updatedResponse.json();
 
+      if (updatedData.status_game === 'finished') {
+        socket.emit('newGame');
+      }
+
       if (!updatedResponse.ok) {
         toast.error(updatedData.detail);
       }
@@ -143,6 +150,10 @@ const GameStatusButton: React.FC = () => {
       });
 
       const updatedData = await updatedResponse.json();
+
+      if (updatedData.status_game === 'finished') {
+        socket.emit('newGame');
+      }
 
       if (!updatedResponse.ok) {
         toast.error(updatedData.detail);
@@ -187,6 +198,11 @@ const GameStatusButton: React.FC = () => {
       });
 
       const updatedData = await updatedResponse.json();
+      console.log(updatedData);
+
+      if (updatedData.status_game === 'finished') {
+        socket.emit('newGame');
+      }
 
       if (!updatedResponse.ok) {
         toast.error(updatedData.detail);
