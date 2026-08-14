@@ -14,9 +14,13 @@ Modal.setAppElement('#root'); // Asegúrate de que el ID coincida con el de tu d
 const playerId = getUserIdFromCookies();
 const token = getTokenFromCookies();
 
+interface WalletData {
+  amount: number | string;
+}
+
 const WalletButton: React.FC = () => {
   const [modalIsOpen, setModalIsOpen] = useState(false);
-  const [walletData, setWalletData] = useState<any>(null);
+  const [walletData, setWalletData] = useState<WalletData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const fetchWalletData = async () => {

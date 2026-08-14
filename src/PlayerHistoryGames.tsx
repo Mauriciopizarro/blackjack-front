@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import './PlayerHistoryGames.css';
 import { getUserIdFromCookies } from './utils/GetUserIdFromCookies';
-import io from 'socket.io-client';
+import { createSocket } from './utils/socket';
 import Skeleton, { SkeletonTheme } from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 
@@ -11,7 +11,7 @@ interface Game {
   player_status: string;
 }
 
-const socket = io('http://localhost:3000');
+const socket = createSocket();
 const playerId = getUserIdFromCookies();
 
 const PlayerHistoryGames: React.FC = () => {
@@ -42,7 +42,7 @@ const PlayerHistoryGames: React.FC = () => {
     return () => {
       socket.off('newGame', fetchGames);
     };
-  }, [playerId]);
+  }, []);
 
   if (loading) {
     return (

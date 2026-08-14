@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Modal from 'react-modal';
 import { Toaster, toast } from 'sonner';
 import { getTokenFromCookies } from './utils/GetTokenFromCookies';
 import { getGameFromCookies } from './utils/GetGameFromCookies';
 import { getUserIdFromCookies } from './utils/GetUserIdFromCookies';
 import './GetStatusGame.css';
-import io from 'socket.io-client';
+import { createSocket } from './utils/socket';
 
 Modal.setAppElement('#root');
 
-const socket = io('http://localhost:3000');
+const socket = createSocket();
 
 interface GameStatus {
   croupier: {
@@ -55,13 +55,19 @@ const GameStatusButton: React.FC = () => {
   const token = getTokenFromCookies();
   const playerId = getUserIdFromCookies();
 
-  const handleClick = async () => {
+  const fetchGameStatus = useCallback(async () => {
     const gameId = getGameFromCookies();
+    if (!gameId) {
+      toast.error('No game selected');
+      return null;
+    }
+
     try {
       const response = await fetch(`https://api-gateway-z0qe.onrender.com/game/status/${gameId}`, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
 
@@ -73,15 +79,62 @@ const GameStatusButton: React.FC = () => {
       }
 
       setGameStatus(responseData);
-      setModalOpen(true);
+      return responseData as GameStatus;
 
     } catch (error) {
       console.error('Error getting game status:', error);
+      return null;
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (!modalOpen) {
+      return;
+    }
+
+    const gameId = getGameFromCookies();
+    if (!gameId) {
+      return;
+    }
+
+    const handleGameUpdated = ({ gameId: updatedGameId }: { gameId?: string }) => {
+      if (updatedGameId === gameId) {
+        void fetchGameStatus();
+      }
+    };
+
+    socket.emit('joinGame', gameId);
+    socket.on('gameUpdated', handleGameUpdated);
+
+    return () => {
+      socket.emit('leaveGame', gameId);
+      socket.off('gameUpdated', handleGameUpdated);
+    };
+  }, [fetchGameStatus, modalOpen]);
+
+  const notifyGameUpdated = (gameId: string, statusGame?: string) => {
+    socket.emit('gameUpdated', { gameId });
+
+    if (statusGame === 'finished') {
+      socket.emit('newGame');
+    }
+  };
+
+  const handleClick = async () => {
+    const status = await fetchGameStatus();
+
+    if (status) {
+      setModalOpen(true);
     }
   };
 
   const handleDealCard = async () => {
     const gameId = getGameFromCookies();
+    if (!gameId) {
+      toast.error('No game selected');
+      return;
+    }
+
     try {
       const response = await fetch(`https://api-gateway-z0qe.onrender.com/game/deal_card/${gameId}`, {
         method: 'POST',
@@ -97,26 +150,10 @@ const GameStatusButton: React.FC = () => {
         return;
       }
 
-      // Fetch updated game status after dealing the card
-      const updatedResponse = await fetch(`https://api-gateway-z0qe.onrender.com/game/status/${gameId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const updatedData = await updatedResponse.json();
-
-      if (updatedData.status_game === 'finished') {
-        socket.emit('newGame');
+      const updatedData = await fetchGameStatus();
+      if (updatedData) {
+        notifyGameUpdated(gameId, updatedData.status_game);
       }
-
-      if (!updatedResponse.ok) {
-        toast.error(updatedData.detail);
-      }
-
-      setGameStatus(updatedData);
     } catch (error) {
       console.error('Error dealing card:', error);
     }
@@ -125,6 +162,11 @@ const GameStatusButton: React.FC = () => {
 
   const handleStand = async () => {
     const gameId = getGameFromCookies();
+    if (!gameId) {
+      toast.error('No game selected');
+      return;
+    }
+
     try {
       const response = await fetch(`https://api-gateway-z0qe.onrender.com/game/stand/${gameId}`, {
         method: 'POST',
@@ -140,26 +182,10 @@ const GameStatusButton: React.FC = () => {
         return;
       }
 
-      // Fetch updated game status after dealing the card
-      const updatedResponse = await fetch(`https://api-gateway-z0qe.onrender.com/game/status/${gameId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const updatedData = await updatedResponse.json();
-
-      if (updatedData.status_game === 'finished') {
-        socket.emit('newGame');
+      const updatedData = await fetchGameStatus();
+      if (updatedData) {
+        notifyGameUpdated(gameId, updatedData.status_game);
       }
-
-      if (!updatedResponse.ok) {
-        toast.error(updatedData.detail);
-      }
-
-      setGameStatus(updatedData);
     } catch (error) {
       console.error('Error standing player:', error);
     }
@@ -168,6 +194,11 @@ const GameStatusButton: React.FC = () => {
 
   const handleBetSubmit = async () => {
     const gameId = getGameFromCookies();
+    if (!gameId) {
+      toast.error('No game selected');
+      return;
+    }
+
     try {
       const response = await fetch(`https://api-gateway-z0qe.onrender.com/game/make_bet/${gameId}`, {
         method: 'POST',
@@ -187,29 +218,10 @@ const GameStatusButton: React.FC = () => {
       toast.success('Bet placed successfully!');
       setBetModalOpen(false);
 
-
-      // Fetch updated game status after dealing the card
-      const updatedResponse = await fetch(`https://api-gateway-z0qe.onrender.com/game/status/${gameId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const updatedData = await updatedResponse.json();
-      console.log(updatedData);
-
-      if (updatedData.status_game === 'finished') {
-        socket.emit('newGame');
+      const updatedData = await fetchGameStatus();
+      if (updatedData) {
+        notifyGameUpdated(gameId, updatedData.status_game);
       }
-
-      if (!updatedResponse.ok) {
-        toast.error(updatedData.detail);
-      }
-
-      setGameStatus(updatedData);
-
     } catch (error) {
       console.error('Error placing bet:', error);
     }

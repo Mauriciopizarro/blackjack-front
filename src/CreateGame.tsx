@@ -3,14 +3,20 @@ import Modal from 'react-modal';
 import './CreateGame.css';
 import { getTokenFromCookies } from './utils/GetTokenFromCookies';
 import { Toaster, toast } from 'sonner';
-import io from 'socket.io-client';
+import type { Socket } from 'socket.io-client';
+import { createSocket } from './utils/socket';
 
 Modal.setAppElement('#root');
 
+interface GameInfo {
+    id: string;
+    admin?: unknown;
+}
+
 const CreateGame: React.FC = () => {
-    const [gameInfo, setGameInfo] = useState<any>(null);
+    const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
     const [errorMessage, setErrorMessage] = useState<string>('');
-    const [socket, setSocket] = useState<any>(null);
+    const [socket, setSocket] = useState<Socket | null>(null);
 
     function setGameInCookies(name: string, value: string) {
         const expires = new Date();
@@ -21,9 +27,8 @@ const CreateGame: React.FC = () => {
 
 
     useEffect(() => {
-        const socket = io('http://localhost:3000');
+        const socket = createSocket();
         setSocket(socket);
-
     }, []);
 
     const handleCreateGameClick = async () => {
@@ -67,6 +72,10 @@ const CreateGame: React.FC = () => {
     };
 
     const startGame = async () => {
+        if (!gameInfo) {
+            return;
+        }
+
         try {
             const token = getTokenFromCookies();
             const response = await fetch(`https://api-gateway-z0qe.onrender.com/game/start/${gameInfo.id}`, {
@@ -79,7 +88,8 @@ const CreateGame: React.FC = () => {
 
             if (response.ok) {
                 toast.success('Game started successfully!');
-                socket.emit('newGame');
+                socket?.emit('gameUpdated', { gameId: gameInfo.id });
+                socket?.emit('newGame');
             } else {
                 const errorData = await response.json();
                 toast.error(errorData.detail);

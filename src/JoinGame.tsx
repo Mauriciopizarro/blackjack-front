@@ -3,8 +3,11 @@ import Modal from 'react-modal';
 import './JoinGame.css';
 import { getTokenFromCookies } from './utils/GetTokenFromCookies';
 import { Toaster, toast } from 'sonner';
+import { createSocket } from './utils/socket';
 
 Modal.setAppElement('#root');
+
+const socket = createSocket();
 
 const JoinGame: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -46,6 +49,7 @@ const JoinGame: React.FC = () => {
           toast.error(responseData.detail);
         } else {
           setGameInCookies("gameId", gameId)
+          socket.emit('gameUpdated', { gameId });
           setGameId('');
           setIsOpen(false);
           setErrorMessage('');
