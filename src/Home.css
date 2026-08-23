@@ -10,6 +10,18 @@
     justify-content: center;
 }
 
+/* Barra superior con los botones de partida: flex con gap uniforme,
+   anclada a la derecha, a la izquierda del botón del wallet ($) */
+.topbar {
+    position: fixed;
+    top: 22px;
+    right: 165px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    z-index: 10;
+}
+
 .buttons > * {
     margin: 0 5px; /* Ajusta el espacio entre los botones */
 }

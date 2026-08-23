@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API_BASE_URL } from './config';
 import './PlayerHistoryGames.css';
 import { getUserIdFromCookies } from './utils/GetUserIdFromCookies';
 import { createSocket } from './utils/socket';
@@ -22,7 +23,7 @@ const PlayerHistoryGames: React.FC = () => {
   useEffect(() => {
     const fetchGames = async () => {
       try {
-        const response = await fetch(`https://api-gateway-z0qe.onrender.com/player/history/${playerId}`);
+        const response = await fetch(`${API_BASE_URL}/player/history/${playerId}`);
         if (!response.ok) {
           throw new Error('Error fetching data');
         }

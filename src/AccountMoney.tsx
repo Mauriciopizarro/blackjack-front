@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { API_BASE_URL } from './config';
 import axios from 'axios';
 import Modal from 'react-modal';
 import './AccountMoney.css';
@@ -25,7 +26,7 @@ const WalletButton: React.FC = () => {
 
   const fetchWalletData = async () => {
     try {
-        const response = await axios.get(`https://api-gateway-z0qe.onrender.com/wallet/get/${playerId}`, {
+        const response = await axios.get(`${API_BASE_URL}/wallet/get/${playerId}`, {
             headers: {
                 Authorization: `Bearer ${token}`
             }

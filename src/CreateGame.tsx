@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from './config';
 import Modal from 'react-modal';
 import './CreateGame.css';
 import { getTokenFromCookies } from './utils/GetTokenFromCookies';
 import { Toaster, toast } from 'sonner';
 import type { Socket } from 'socket.io-client';
 import { createSocket } from './utils/socket';
+import { useGame } from './GameContext';
 
 Modal.setAppElement('#root');
 
@@ -17,14 +19,7 @@ const CreateGame: React.FC = () => {
     const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
     const [errorMessage, setErrorMessage] = useState<string>('');
     const [socket, setSocket] = useState<Socket | null>(null);
-
-    function setGameInCookies(name: string, value: string) {
-        const expires = new Date();
-        expires.setTime(expires.getTime() + 1 * 24 * 60 * 60 * 1000);
-        const cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
-        document.cookie = cookie;
-    }
-
+    const { setCurrentGameId } = useGame();
 
     useEffect(() => {
         const socket = createSocket();
@@ -36,7 +31,7 @@ const CreateGame: React.FC = () => {
 
         if (token && socket) {
             try {
-                const response = await fetch(`https://api-gateway-z0qe.onrender.com/game/create`, {
+                const response = await fetch(`${API_BASE_URL}/game/create`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -48,13 +43,13 @@ const CreateGame: React.FC = () => {
                 const responseData = await response.json();
 
                 if (response.ok) {
-                    setGameInCookies("gameId", responseData.id);
+                    setCurrentGameId(responseData.id);
                     setGameInfo(responseData);
                 } else if (responseData.detail.includes("is already created, please start them")) {
                     const gameIdMatch = responseData.detail.match(/Game id ([a-f0-9-]+) is already created/);
                     if (gameIdMatch) {
                         const existingGameId = gameIdMatch[1];
-                        setGameInCookies("gameId", existingGameId);
+                        setCurrentGameId(existingGameId);
                         setGameInfo({
                             id: existingGameId,
                             admin: responseData.admin // Ajusta esto según la estructura de tu respuesta
@@ -78,7 +73,7 @@ const CreateGame: React.FC = () => {
 
         try {
             const token = getTokenFromCookies();
-            const response = await fetch(`https://api-gateway-z0qe.onrender.com/game/start/${gameInfo.id}`, {
+            const response = await fetch(`${API_BASE_URL}/game/start/${gameInfo.id}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

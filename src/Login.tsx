@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_BASE_URL } from './config';
 import './Login.css'
 import { Toaster, toast } from 'sonner'
 
@@ -23,7 +24,7 @@ const Login: React.FC = () => {
         }
 
         try {
-            const response = await fetch('https://api-gateway-z0qe.onrender.com/login', {
+            const response = await fetch(`${API_BASE_URL}/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

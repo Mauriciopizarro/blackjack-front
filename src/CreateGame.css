@@ -52,9 +52,6 @@
   
   .createButton {
     padding: 10px 20px;
-    position: fixed;
-    top: 22px;
-    right: 577px;
     font-size: 18px;
     background-color: #e6b800;
     color: black;

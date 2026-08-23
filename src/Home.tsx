@@ -5,19 +5,26 @@ import CreateGame from './CreateGame';
 import GameStatusButton from './GetStatusGame';
 import WalletButton from './AccountMoney';
 import PlayerHistoryGames from './PlayerHistoryGames';
+import MyGames from './MyGames';
+import { GameProvider } from './GameContext';
 
 
 const Home: React.FC = () => {
 
   return (
     <div className='home'>
-      <div className='buttons'>
-        {<JoinGame/>}
-        {<CreateGame/>}
-        {<GameStatusButton/>}
-        {<WalletButton/>}
-        {<PlayerHistoryGames/>}
-      </div>
+      <GameProvider>
+        <div className='topbar'>
+          {<GameStatusButton/>}
+          {<CreateGame/>}
+          {<JoinGame/>}
+          {<MyGames/>}
+        </div>
+        <div className='buttons'>
+          {<WalletButton/>}
+          {<PlayerHistoryGames/>}
+        </div>
+      </GameProvider>
     </div>
   )
 }

@@ -53,9 +53,132 @@
   background-color: #e6b800;
   color: black;
   cursor: pointer;
-  position: fixed;
-  top: 22px;
-  right: 441px;
+}
+
+/* ===== Lobby de espera (pending start from host) ===== */
+.lobby-modal {
+  background-color: #292832;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+  max-width: 460px;
+  width: 100%;
+  padding: 24px;
+  color: white;
+  position: relative;
+  outline: none;
+}
+
+.lobby-content {
+  position: relative;
+}
+
+.lobby-title {
+  font-size: 24px;
+  color: #ffcc00;
+  margin: 0 0 4px 0;
+  text-align: center;
+}
+
+.lobby-game-id {
+  color: #bbbbbb;
+  text-align: center;
+  font-size: 13px;
+  margin: 0 0 18px 0;
+  word-break: break-all;
+}
+
+.lobby-game-id span {
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.lobby-players {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.lobby-player-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: #2a2a2a;
+  padding: 10px 14px;
+  border-radius: 8px;
+}
+
+.lobby-player-icon {
+  color: #ffffff;
+  font-size: 18px;
+}
+
+.lobby-player-name {
+  flex: 1;
+  font-weight: bold;
+  font-size: 15px;
+  color: #ffffff;
+}
+
+.lobby-player-waiting {
+  color: #fbbf24;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.lobby-player-row.host {
+  border: 2px solid #ffcc00;
+}
+
+.lobby-player-badge {
+  font-size: 12px;
+  font-weight: bold;
+  padding: 4px 10px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.lobby-player-badge.host {
+  background-color: #ffcc00;
+  color: #1c1c1c;
+}
+
+.lobby-player-badge.joined {
+  background-color: #2f8f46;
+  color: #ffffff;
+}
+
+.lobby-empty {
+  text-align: center;
+  color: #bbbbbb;
+}
+
+.lobby-pending {
+  text-align: center;
+  background-color: #1c1c1c;
+  border: 2px solid #ffcc00;
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.lobby-pending-emoji {
+  font-size: 28px;
+  display: block;
+}
+
+.lobby-pending-title {
+  margin: 6px 0 2px 0;
+  font-size: 16px;
+  color: #ffcc00;
+  font-weight: bold;
+}
+
+.lobby-pending-subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #fbbf24;
+  letter-spacing: 0.5px;
 }
 
 .join-game-button:hover {
