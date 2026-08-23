@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { API_BASE_URL } from './config';
 import Modal from 'react-modal';
 import { Toaster, toast } from 'sonner';
 import { getTokenFromCookies } from './utils/GetTokenFromCookies';
-import { getGameFromCookies } from './utils/GetGameFromCookies';
 import { getUserIdFromCookies } from './utils/GetUserIdFromCookies';
 import './GetStatusGame.css';
 import { createSocket } from './utils/socket';
+import { useGame } from './GameContext';
 
 Modal.setAppElement('#root');
 
@@ -48,22 +49,21 @@ const cardImages: { [key: string]: string } = {
 };
 
 const GameStatusButton: React.FC = () => {
-  const [modalOpen, setModalOpen] = useState(false);
-  const [betModalOpen, setBetModalOpen] = useState(false);
   const [betAmount, setBetAmount] = useState('');
   const [gameStatus, setGameStatus] = useState<GameStatus | null>(null);
+  const { currentGameId, statusOpen, openStatus, closeStatus } = useGame();
   const token = getTokenFromCookies();
   const playerId = getUserIdFromCookies();
 
   const fetchGameStatus = useCallback(async () => {
-    const gameId = getGameFromCookies();
+    const gameId = currentGameId;
     if (!gameId) {
       toast.error('No game selected');
       return null;
     }
 
     try {
-      const response = await fetch(`https://api-gateway-z0qe.onrender.com/game/status/${gameId}`, {
+      const response = await fetch(`${API_BASE_URL}/game/status/${gameId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -78,24 +78,37 @@ const GameStatusButton: React.FC = () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      setGameStatus(responseData);
+      // Anti-parpadeo: solo actualizamos el estado si los datos realmente
+      // cambiaron. Si devolvemos la referencia anterior, React no re-renderiza
+      // y el tablero queda estable entre polls.
+      setGameStatus(prev =>
+        prev && JSON.stringify(prev) === JSON.stringify(responseData)
+          ? prev
+          : (responseData as GameStatus)
+      );
       return responseData as GameStatus;
 
     } catch (error) {
       console.error('Error getting game status:', error);
       return null;
     }
-  }, [token]);
+  }, [currentGameId, token]);
 
   useEffect(() => {
-    if (!modalOpen) {
+    if (!statusOpen || !currentGameId) {
       return;
     }
 
-    const gameId = getGameFromCookies();
-    if (!gameId) {
-      return;
-    }
+    const gameId = currentGameId;
+
+    // Al abrir o CAMBIAR de partida limpiamos el tablero anterior (si no,
+    // quedarían visibles los datos del juego anterior hasta el próximo poll)
+    // y traemos el estado fresco del juego seleccionado de inmediato.
+    setGameStatus(null);
+    setBetAmount('');
+    void fetchGameStatus();
+
+    const rejoinGame = () => socket.emit('joinGame', gameId);
 
     const handleGameUpdated = ({ gameId: updatedGameId }: { gameId?: string }) => {
       if (updatedGameId === gameId) {
@@ -103,14 +116,26 @@ const GameStatusButton: React.FC = () => {
       }
     };
 
+    // Entramos a la sala del juego. Socket.IO pierde la membresía de las salas
+    // cuando el cliente se reconecta (servidor reiniciado / red cortada / tab
+    // dormida), así que nos volvemos a unir en cada evento `connect`.
     socket.emit('joinGame', gameId);
+    socket.on('connect', rejoinGame);
     socket.on('gameUpdated', handleGameUpdated);
 
+    // Refresco periódico de respaldo: garantiza que el tablero se actualice
+    // en vivo aunque el evento socket se pierda por completo.
+    const statusInterval = window.setInterval(() => {
+      void fetchGameStatus();
+    }, 3000);
+
     return () => {
+      socket.off('connect', rejoinGame);
       socket.emit('leaveGame', gameId);
       socket.off('gameUpdated', handleGameUpdated);
+      window.clearInterval(statusInterval);
     };
-  }, [fetchGameStatus, modalOpen]);
+  }, [fetchGameStatus, statusOpen, currentGameId]);
 
   const notifyGameUpdated = (gameId: string, statusGame?: string) => {
     socket.emit('gameUpdated', { gameId });
@@ -124,19 +149,19 @@ const GameStatusButton: React.FC = () => {
     const status = await fetchGameStatus();
 
     if (status) {
-      setModalOpen(true);
+      openStatus();
     }
   };
 
   const handleDealCard = async () => {
-    const gameId = getGameFromCookies();
+    const gameId = currentGameId;
     if (!gameId) {
       toast.error('No game selected');
       return;
     }
 
     try {
-      const response = await fetch(`https://api-gateway-z0qe.onrender.com/game/deal_card/${gameId}`, {
+      const response = await fetch(`${API_BASE_URL}/game/deal_card/${gameId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -159,16 +184,15 @@ const GameStatusButton: React.FC = () => {
     }
   };
 
-
   const handleStand = async () => {
-    const gameId = getGameFromCookies();
+    const gameId = currentGameId;
     if (!gameId) {
       toast.error('No game selected');
       return;
     }
 
     try {
-      const response = await fetch(`https://api-gateway-z0qe.onrender.com/game/stand/${gameId}`, {
+      const response = await fetch(`${API_BASE_URL}/game/stand/${gameId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -191,22 +215,27 @@ const GameStatusButton: React.FC = () => {
     }
   };
 
-
   const handleBetSubmit = async () => {
-    const gameId = getGameFromCookies();
+    const gameId = currentGameId;
     if (!gameId) {
       toast.error('No game selected');
       return;
     }
 
+    const numericBet = Math.floor(Number(betAmount));
+    if (!numericBet || numericBet < 1) {
+      toast.error('Enter a valid bet amount');
+      return;
+    }
+
     try {
-      const response = await fetch(`https://api-gateway-z0qe.onrender.com/game/make_bet/${gameId}`, {
+      const response = await fetch(`${API_BASE_URL}/game/make_bet/${gameId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ bet_amount: betAmount, player_id: {playerId} }),
+        body: JSON.stringify({ bet_amount: numericBet, player_id: playerId }),
       });
 
       if (!response.ok) {
@@ -216,7 +245,7 @@ const GameStatusButton: React.FC = () => {
       }
 
       toast.success('Bet placed successfully!');
-      setBetModalOpen(false);
+      setBetAmount('');
 
       const updatedData = await fetchGameStatus();
       if (updatedData) {
@@ -233,87 +262,119 @@ const GameStatusButton: React.FC = () => {
     ));
   };
 
+  const currentPlayer = gameStatus?.players.find(p => p.id === playerId);
+
+  const handleBetInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === '') {
+      setBetAmount('');
+    } else {
+      const numericValue = Math.floor(Math.max(Number(value), 0));
+      if (numericValue > 0) {
+        setBetAmount(numericValue.toString());
+      }
+    }
+  };
+
   return (
     <>
       <Toaster position="bottom-center" richColors />
       <div>
         <button className="createButton2" onClick={handleClick}>Game Status</button>
         <Modal
-          isOpen={modalOpen}
-          onRequestClose={() => setModalOpen(false)}
+          isOpen={statusOpen}
+          onRequestClose={closeStatus}
           className="game-status-modal"
           overlayClassName="game-status-overlay"
         >
-          <button className="close-button" onClick={() => setModalOpen(false)}>&times;</button>
+          <button className="close-button" onClick={closeStatus}>&times;</button>
           {gameStatus ? (
             <div className="game-hub">
-              <div className="dealer-section">
-                <h3 className="section-title">Croupier</h3>
-                <div className="dealer-info">
-                  <h4 className="dealer-name">{gameStatus.croupier.name}</h4>
-                  <div className="dealer-status">
-                    <p style={{ fontSize: '20px' }}>Status: <span>{gameStatus.croupier.status}</span></p>
-                    <p style={{ fontSize: '20px' }}>Total Points: <span>{gameStatus.croupier.total_points.join(', ')}</span></p>
-                    <div className="cards-container">
-                      {renderCards(gameStatus.croupier.cards)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="players-section">
-                <h3 className="section-title">Players</h3>
-                {gameStatus.players.map(player => (
-                  <div key={player.id} className="player-info">
-                    <h4 className="player-name">{player.name}</h4>
-                    <div className="player-status">
-                      <p style={{ fontSize: '20px' }}>Status: <span>{player.status}</span></p>
-                      <p style={{ fontSize: '20px' }}>Total Points: <span>{player.total_points.join(', ')}</span></p>
-                      <p style={{ fontSize: '20px' }}>Bet Amount: <span>{player.bet_amount}</span></p>
-                    </div>
-                    <div className="cards-container">
-                      {renderCards(player.cards)}
-                    </div>
-                    {player.id === playerId && (
-                      <div className="player-buttons">
-                        <button className="deal-card-button" onClick={handleDealCard}>Deal Card</button>
-                        <button className="stand-button" onClick={handleStand}>Stand</button>
-                        <button className="bet-button" onClick={() => setBetModalOpen(true)}>Make a Bet</button>
+              {gameStatus.status_game === 'pending_bet' ? (
+                <div className="bet-phase">
+                  <h3 className="bet-phase-title">Place your bets to start the round</h3>
+                  <p className="bet-phase-subtitle">
+                    The cards are dealt automatically once every player has placed a bet.
+                  </p>
+
+                  <div className="bet-phase-players">
+                    {gameStatus.players.map(player => (
+                      <div key={player.id} className="bet-phase-player">
+                        <span className="bet-phase-player-name">
+                          {player.name}{player.id === playerId ? ' (you)' : ''}
+                        </span>
+                        {player.bet_amount > 0 ? (
+                          <span className="bet-phase-player-bet placed">&#10003; Bet: ${player.bet_amount}</span>
+                        ) : (
+                          <span className="bet-phase-player-bet pending">No bet yet</span>
+                        )}
                       </div>
-                    )}
+                    ))}
                   </div>
-                ))}
-              </div>
+
+                  {currentPlayer && currentPlayer.bet_amount > 0 ? (
+                    <div className="bet-waiting">
+                      &#9203; You already placed ${currentPlayer.bet_amount}. Waiting for the other players...
+                    </div>
+                  ) : (
+                    <div className="bet-form">
+                      <label htmlFor="bet-amount">Your bet amount</label>
+                      <input
+                        id="bet-amount"
+                        type="number"
+                        value={betAmount}
+                        onChange={handleBetInputChange}
+                        placeholder="Enter bet amount"
+                        min="1"
+                      />
+                      <button className="submit-bet-button" onClick={handleBetSubmit}>Place My Bet</button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <div className="dealer-section">
+                    <h3 className="section-title">Croupier</h3>
+                    <div className="dealer-info">
+                      <h4 className="dealer-name">{gameStatus.croupier.name}</h4>
+                      <div className="dealer-status">
+                        <p style={{ fontSize: '20px' }}>Status: <span>{gameStatus.croupier.status}</span></p>
+                        <p style={{ fontSize: '20px' }}>Total Points: <span>{gameStatus.croupier.total_points.join(', ')}</span></p>
+                        <div className="cards-container">
+                          {renderCards(gameStatus.croupier.cards)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="players-section">
+                    <h3 className="section-title">Players</h3>
+                    {gameStatus.players.map(player => (
+                      <div key={player.id} className="player-info">
+                        <h4 className="player-name">{player.name}</h4>
+                        <div className="player-status">
+                          <p style={{ fontSize: '20px' }}>Status: <span>{player.status}</span></p>
+                          <p style={{ fontSize: '20px' }}>Total Points: <span>{player.total_points.join(', ')}</span></p>
+                          <p style={{ fontSize: '20px' }}>Bet Amount: <span>{player.bet_amount}</span></p>
+                        </div>
+                        <div className="cards-container">
+                          {renderCards(player.cards)}
+                        </div>
+                        {player.id === playerId && gameStatus.status_game === 'started' && (
+                          <div className="player-buttons">
+                            <button className="deal-card-button" onClick={handleDealCard}>Deal Card</button>
+                            <button className="stand-button" onClick={handleStand}>Stand</button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           ) : (
-          <div>Loading...</div>
-        )}
+            <div>Loading...</div>
+          )}
         </Modal>
-        {betModalOpen && (
-          <div className="bet-modal">
-            <div className="bet-modal-content">
-              <button className="close-button" onClick={() => setBetModalOpen(false)}>&times;</button>
-              <h3>Place Your Bet</h3>
-              <input
-                type="number"
-                value={betAmount}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === '') {
-                    setBetAmount('');
-                  } else {
-                    const numericValue = Math.floor(Math.max(Number(value), 0));
-                    if (numericValue > 0) {
-                      setBetAmount(numericValue.toString());
-                    }
-                  }
-                }}
-                placeholder="Enter bet amount"
-                min="1"
-              />
-              <button className="submit-bet-button" onClick={handleBetSubmit}>Submit Bet</button>
-            </div>
-          </div>
-        )}
       </div>
     </>
   );

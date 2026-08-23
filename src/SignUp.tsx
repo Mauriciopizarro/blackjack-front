@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_BASE_URL } from './config';
 import './SignUp.css'
 import { Toaster, toast } from 'sonner'
 
@@ -27,7 +28,7 @@ const SignUp: React.FC = () => {
         };
 
         try {
-            const response = await fetch('https://api-gateway-z0qe.onrender.com/sign_up', {
+            const response = await fetch(`${API_BASE_URL}/sign_up`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
