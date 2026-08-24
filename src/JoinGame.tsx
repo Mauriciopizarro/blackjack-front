@@ -37,7 +37,7 @@ const JoinGame: React.FC = () => {
   const [lobbyPlayers, setLobbyPlayers] = useState<LobbyPlayer[]>([]);
   const [lobbyStatus, setLobbyStatus] = useState('');
   const userId = getUserIdFromCookies();
-  const { setCurrentGameId } = useGame();
+  const { setCurrentGameId, openStatus } = useGame();
 
   const handleJoinClick = () => {
     setIsOpen(true);
@@ -76,6 +76,8 @@ const JoinGame: React.FC = () => {
       // Si la partida ya está jugándose o terminó, ya no corresponde esperar al host.
       if (data.status === 'started') {
         setLobbyOpen(false);
+        setCurrentGameId(id);
+        openStatus();
         toast.success('The game has started! Place your bets.');
       } else if (data.status === 'finished') {
         setLobbyOpen(false);
@@ -98,6 +100,7 @@ const JoinGame: React.FC = () => {
 
     const handleNewGame = () => {
       setLobbyOpen(false);
+      openStatus();
       toast.success('The host started the game! Place your bets.');
     };
 

@@ -19,7 +19,7 @@ const CreateGame: React.FC = () => {
     const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
     const [errorMessage, setErrorMessage] = useState<string>('');
     const [socket, setSocket] = useState<Socket | null>(null);
-    const { setCurrentGameId } = useGame();
+    const { setCurrentGameId, openStatus } = useGame();
 
     useEffect(() => {
         const socket = createSocket();
@@ -83,6 +83,7 @@ const CreateGame: React.FC = () => {
 
             if (response.ok) {
                 toast.success('Game started successfully!');
+                openStatus();
                 socket?.emit('gameUpdated', { gameId: gameInfo.id });
                 socket?.emit('newGame');
             } else {
