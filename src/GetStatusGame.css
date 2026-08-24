@@ -1,16 +1,18 @@
 .game-status-modal {
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: #292832;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(97, 94, 94, 0.2);
-  opacity: 0.9;
-  width: 80%; /* Aumenta el ancho del modal al 80% de la pantalla */
-  max-width: 1200px; /* Limita el ancho máximo del modal */
-  padding: 20px; /* Agrega un padding interno */
-  box-sizing: border-box; /* Asegura que el padding no aumente el tamaño total del modal */
+  top: 2.5vh;
+  left: 2.5vw;
+  right: 2.5vw;
+  bottom: 2.5vh;
+  width: auto;
+  max-width: none;
+  transform: none;
+  background-color: #0d1f15;
+  border-radius: 14px;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
+  padding: 14px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .game-hub {
@@ -82,8 +84,15 @@
   font-weight: bold;
 }
 
-.deal-card-button:hover, .bet-button:hover, .stand-button:hover {
+.deal-card-button:hover:not(:disabled), .bet-button:hover:not(:disabled), .stand-button:hover:not(:disabled) {
   background-color: #e6b800;
+}
+
+.deal-card-button:disabled, .bet-button:disabled, .stand-button:disabled {
+  background-color: #5a5a5a;
+  color: #b9b9b9;
+  cursor: not-allowed;
+  opacity: 0.75;
 }
 
 .createButton2 {
@@ -150,18 +159,6 @@
 
 .submit-bet-button:hover {
   background-color: #e6b800;
-}
-
-.game-status-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: rgb(35, 34, 34);
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
 }
 
 .game-status-overlay {
@@ -259,4 +256,359 @@
   border: none;
   border-radius: 6px;
   font-size: 16px;
+}
+
+/* ===== Fichas de casino (bet fase) ===== */
+.chips-bet {
+  max-width: 480px;
+  margin: 0 auto;
+  background-color: #2a2a2a;
+  padding: 20px;
+  border-radius: 14px;
+  border: 2px solid #ffcc00;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.chips-total {
+  font-size: 18px;
+  color: #ffffff;
+  margin: 0;
+}
+
+.chips-total-amount {
+  color: #ffcc00;
+  font-weight: bold;
+  font-size: 22px;
+}
+
+.chip-rack {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.chip {
+  --chip-color: #e6b800;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 4px dashed #1c1c1c;
+  background: radial-gradient(circle, #fff 0 30%, var(--chip-color) 30% 100%);
+  color: #1c1c1c;
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  transition: transform 0.12s ease;
+}
+
+.chip[data-denom="100"]       { --chip-color: #4a90d9; }
+.chip[data-denom="500"]       { --chip-color: #c5352b; }
+.chip[data-denom="1000"]      { --chip-color: #1f9a52; }
+
+.chip:hover {
+  transform: translateY(-3px);
+}
+
+.chip:active {
+  transform: translateY(1px) scale(0.95);
+}
+
+.chip-inner {
+  background: rgba(255, 255, 255, 0.75);
+  border-radius: 50%;
+  padding: 4px 8px;
+  display: inline-flex;
+}
+
+.chips-stack {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  gap: -2px;
+}
+
+.chip-stacked {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 3px dashed #1c1c1c;
+  display: inline-block;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+  margin-left: -12px;
+}
+
+.chip-stacked-denom-100  { background: radial-gradient(circle, #fff 0 30%, #4a90d9 30% 100%); }
+.chip-stacked-denom-500  { background: radial-gradient(circle, #fff 0 30%, #c5352b 30% 100%); }
+.chip-stacked-denom-1000 { background: radial-gradient(circle, #fff 0 30%, #1f9a52 30% 100%); }
+
+.chips-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.chip-undo, .chip-clear {
+  padding: 10px 16px;
+  background-color: #4a4a4a;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.chip-undo:disabled, .chip-clear:disabled {
+  background-color: #5a5a5a;
+  color: #b9b9b9;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.chips-submit {
+  background-color: #ffcc00;
+  color: #1c1c1c;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 18px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.chips-submit:disabled {
+  background-color: #5a5a5a;
+  color: #b9b9b9;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* ===== Mesa de blackjack (fases started/finished) ===== */
+.table-felt {
+  position: relative;
+  height: 100%;
+  border-radius: 18px;
+  padding: clamp(8px, 1.2vw, 16px) clamp(10px, 1.5vw, 20px) clamp(12px, 1.6vw, 24px);
+  background:
+    radial-gradient(ellipse at 50% 38%, #1f9a52 0%, #157243 42%, #0d4c2b 75%, #083420 100%);
+  border: clamp(6px, 0.8vw, 10px) solid #5b3a1e;
+  box-shadow:
+    inset 0 0 70px rgba(0, 0, 0, 0.55),
+    0 12px 32px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.table-branding {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 70%;
+  user-select: none;
+  z-index: 2;
+}
+
+.arc-line {
+  font-family: Georgia, 'Times New Roman', serif;
+  color: #f5c542;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.45);
+}
+
+.arc-big {
+  font-size: clamp(13px, 1.7vw, 22px);
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+.arc-small {
+  font-size: clamp(8px, 0.9vw, 12px);
+  letter-spacing: clamp(1px, 0.25vw, 3px);
+  color: #ffe08a;
+  margin-top: 2px;
+}
+
+.arc-spaced {
+  font-size: clamp(10px, 1.2vw, 15px);
+  letter-spacing: clamp(2px, 0.5vw, 6px);
+  margin-top: 4px;
+}
+
+.table-shoe {
+  position: absolute;
+  top: clamp(14px, 2vh, 20px);
+  right: clamp(16px, 2vw, 28px);
+  width: clamp(36px, 4vw, 52px);
+  height: clamp(52px, 5.6vw, 74px);
+}
+
+.shoe-card {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  border: 2px solid #fff;
+  background: repeating-linear-gradient(45deg, #b3121f 0 6px, #8e0e18 6px 12px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
+}
+
+.shoe-card:nth-child(1) { transform: rotate(-7deg) translate(-5px, 3px); }
+.shoe-card:nth-child(2) { transform: rotate(-2deg) translate(2px, 0); }
+.shoe-card:nth-child(3) { transform: rotate(4deg) translate(8px, -2px); }
+
+.dealer-spot {
+  position: absolute;
+  top: clamp(64px, 10vh, 100px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  z-index: 3;
+}
+
+.spot-name {
+  font-size: clamp(13px, 1.4vw, 17px);
+  font-weight: bold;
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.dealer-title {
+  color: #f5c542;
+}
+
+.cards-container {
+  display: flex;
+  gap: clamp(4px, 0.6vw, 8px);
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: clamp(160px, 20vw, 280px);
+}
+
+.table-card {
+  width: clamp(40px, 4.4vw, 62px);
+  height: clamp(59px, 6.5vw, 91px);
+  border-radius: 7px;
+  background: #ffffff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
+}
+
+.deal-anim {
+  animation: cardDeal 0.55s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+@keyframes cardDeal {
+  0% {
+    opacity: 0;
+    transform: translate(var(--deal-dx, 0px), var(--deal-dy, -300px))
+      rotate(-24deg) scale(0.85);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deal-anim {
+    animation: none;
+  }
+}
+
+.table-slots {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.table-slot {
+  position: absolute;
+  width: clamp(30px, 3.4vw, 46px);
+  height: clamp(45px, 5vw, 68px);
+  border: 2px solid rgba(245, 197, 66, 0.75);
+  border-radius: 7px;
+}
+
+.player-spot {
+  position: absolute;
+  transform-origin: bottom center;
+  z-index: 4;
+  background: rgba(0, 0, 0, 0.4);
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  border-radius: 12px;
+  padding: clamp(6px, 0.9vw, 12px) clamp(8px, 1.1vw, 14px);
+  min-width: clamp(130px, 15vw, 180px);
+  text-align: center;
+  color: #ffffff;
+}
+
+.player-spot.current {
+  border-color: #f5c542;
+  box-shadow: 0 0 14px rgba(245, 197, 66, 0.35);
+}
+
+.spot-points {
+  font-size: clamp(10px, 1.1vw, 13px);
+  color: #e8e8e8;
+  margin-top: 4px;
+}
+
+.spot-points span {
+  color: #f5c542;
+  font-weight: bold;
+}
+
+.spot-status.st-winner {
+  color: #4ade80;
+  font-weight: bold;
+}
+
+.spot-status.st-looser {
+  color: #f87171;
+  font-weight: bold;
+}
+
+.spot-status.st-playing,
+.spot-status.st-waiting_croupier {
+  color: #93c5fd;
+}
+
+.player-buttons {
+  margin-top: 8px;
+}
+
+.table-result {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid #f5c542;
+  color: #f5c542;
+  font-weight: bold;
+  padding: 6px 18px;
+  border-radius: 20px;
+  font-size: 15px;
+  white-space: nowrap;
+}
+
+/* Fase de apuestas sobre la mesa, contenido centrado */
+.table-felt-bet {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

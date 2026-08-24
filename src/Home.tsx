@@ -14,8 +14,8 @@ const Home: React.FC = () => {
   return (
     <div className='home'>
       <GameProvider>
+        <GameStatusButton />
         <div className='topbar'>
-          {<GameStatusButton/>}
           {<CreateGame/>}
           {<JoinGame/>}
           {<MyGames/>}
