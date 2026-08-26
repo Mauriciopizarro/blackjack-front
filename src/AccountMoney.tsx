@@ -7,6 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDollarSign } from '@fortawesome/free-solid-svg-icons';
 import { getUserIdFromCookies } from './utils/GetUserIdFromCookies';
 import { getTokenFromCookies } from './utils/GetTokenFromCookies';
+import { isSessionExpired, redirectToLogin } from './utils/session';
 
 Modal.setAppElement('#root'); // Asegúrate de que el ID coincida con el de tu div principal en index.html
 
@@ -35,6 +36,10 @@ const WalletButton: React.FC = () => {
             }
         });
         if (!response.ok) {
+          if (isSessionExpired(response.status)) {
+            redirectToLogin();
+            return;
+          }
           throw new Error('Error fetching wallet');
         }
         const data: WalletData = await response.json();

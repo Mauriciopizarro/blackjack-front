@@ -6,6 +6,7 @@ import { getTokenFromCookies } from './utils/GetTokenFromCookies';
 import { getUserIdFromCookies } from './utils/GetUserIdFromCookies';
 import './GetStatusGame.css';
 import { createSocket } from './utils/socket';
+import { isSessionExpired, redirectToLogin } from './utils/session';
 import { useGame } from './GameContext';
 // Cartas locales: Vite las importa estáticamente, las cachea con hash de
 // contenido y las sirve desde el mismo origen (sin dependencia de CDNs externos).
@@ -90,6 +91,10 @@ const GameStatusButton: React.FC = () => {
       const responseData = await response.json();
 
       if (!response.ok) {
+        if (isSessionExpired(response.status, responseData.detail)) {
+          redirectToLogin();
+          return null;
+        }
         toast.error(responseData.detail);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -179,6 +184,10 @@ const GameStatusButton: React.FC = () => {
 
       if (!response.ok) {
         const responseData = await response.json();
+        if (isSessionExpired(response.status, responseData.detail)) {
+          redirectToLogin();
+          return;
+        }
         toast.error(responseData.detail);
         return;
       }
@@ -210,6 +219,10 @@ const GameStatusButton: React.FC = () => {
 
       if (!response.ok) {
         const responseData = await response.json();
+        if (isSessionExpired(response.status, responseData.detail)) {
+          redirectToLogin();
+          return;
+        }
         toast.error(responseData.detail);
         return;
       }
@@ -248,6 +261,10 @@ const GameStatusButton: React.FC = () => {
 
       if (!response.ok) {
         const responseData = await response.json();
+        if (isSessionExpired(response.status, responseData.detail)) {
+          redirectToLogin();
+          return;
+        }
         toast.error(responseData.detail);
         return;
       }

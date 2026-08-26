@@ -6,6 +6,7 @@ import { getTokenFromCookies } from './utils/GetTokenFromCookies';
 import { getUserIdFromCookies } from './utils/GetUserIdFromCookies';
 import { toast } from 'sonner';
 import { createSocket } from './utils/socket';
+import { isSessionExpired, redirectToLogin } from './utils/session';
 import { useGame } from './GameContext';
 
 Modal.setAppElement('#root');
@@ -60,6 +61,9 @@ const JoinGame: React.FC = () => {
 
       if (!response.ok) {
         // La partida puede tardar unos instantes en registrarse luego del join.
+        if (isSessionExpired(response.status)) {
+          redirectToLogin();
+        }
         return;
       }
 
@@ -150,6 +154,11 @@ const JoinGame: React.FC = () => {
         });
 
         const responseData = await response.json();
+
+        if (isSessionExpired(response.status, responseData.detail)) {
+          redirectToLogin();
+          return;
+        }
 
         if (response.status !== 200) {
           toast.error(responseData.detail);

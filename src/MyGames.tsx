@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { API_BASE_URL } from './config';
 import { getUserIdFromCookies } from './utils/GetUserIdFromCookies';
+import { isSessionExpired, redirectToLogin } from './utils/session';
 import { useGame } from './GameContext';
 import Modal from 'react-modal';
 import { createSocket } from './utils/socket';
@@ -33,6 +34,10 @@ const MyGames: React.FC = () => {
     try {
       const response = await fetch(`${API_BASE_URL}/game/lobby/list/${playerId}`);
       if (!response.ok) {
+        if (isSessionExpired(response.status)) {
+          redirectToLogin();
+          return;
+        }
         throw new Error('Error fetching games');
       }
       const data = await response.json();
