@@ -503,27 +503,12 @@ const GameStatusButton: React.FC = () => {
     setPendingChips([]);
   };
 
-  // Desglose de casino: el saldo se convierte en fichas por denominación
-  // (greedy, de mayor a menor). Ese es el stock total disponible.
-  const baseChipCounts = React.useMemo(() => {
-    const counts: Record<number, number> = {};
-    let remaining = walletAmount ?? 0;
-    for (const denom of CHIP_DENOMS) {
-      const count = Math.floor(remaining / denom);
-      counts[denom] = count;
-      remaining -= count * denom;
-    }
-    return counts;
-  }, [walletAmount]);
-
-  // Fichas ya puestas en la mesa, por denominación.
-  const placedByDenom = React.useMemo(() => {
-    const counts: Record<number, number> = {};
-    for (const chip of pendingChips) {
-      counts[chip] = (counts[chip] ?? 0) + 1;
-    }
-    return counts;
-  }, [pendingChips]);
+  // Modelo de casino dinámico: de lo que te queda sin apostar podés sacar
+  // hasta floor(restante / denominación) fichas de cada tipo. Cada ficha
+  // puesta o removida recalcula todos los stocks al instante.
+  const remainingMoney = Math.max(0, (walletAmount ?? 0) - pendingBetAmount);
+  const availableFor = (denom: number): number =>
+    Math.floor(remainingMoney / denom);
 
   return (
     <>
@@ -573,8 +558,7 @@ const GameStatusButton: React.FC = () => {
 
                       <div className="chip-rack">
                         {[...CHIP_DENOMS].reverse().map(denom => {
-                          const available =
-                            (baseChipCounts[denom] ?? 0) - (placedByDenom[denom] ?? 0);
+                          const available = availableFor(denom);
                           return (
                             <button
                               key={denom}
@@ -583,10 +567,12 @@ const GameStatusButton: React.FC = () => {
                               data-denom={denom}
                               onClick={() => addChip(denom)}
                               disabled={available <= 0}
-                              title={`${available} x $${denom} left`}
+                              title={`${available.toLocaleString('en-US')} x $${denom} left`}
                             >
                               <span className="chip-inner">{denom}</span>
-                              <span className="chip-count">{available}</span>
+                              <span className="chip-count">
+                                {available > 999 ? '999+' : available.toLocaleString('en-US')}
+                              </span>
                             </button>
                           );
                         })}
