@@ -99,14 +99,6 @@ const runningTotals = (cards: string[]): number[] => {
   return totals;
 };
 
-interface PointsCounterProps {
-  cards: string[];
-  /** Valor oficial del backend (total_points.join(', ')) para el estado final. */
-  finalText: string;
-  baseDelay?: number;
-  delayStep?: number;
-}
-
 /**
  * Cantidad de cartas ya "aterrizadas" según la animación de reparto.
  * Compartido por el contador de puntos y el status del jugador para que
@@ -151,6 +143,8 @@ interface PointsCounterProps {
   cards: string[];
   /** Valor oficial del backend (total_points.join(', ')) para el estado final. */
   finalText: string;
+  /** Retiene el valor oficial mientras la compuerta global esté activa. */
+  hold?: boolean;
   baseDelay?: number;
   delayStep?: number;
 }
@@ -163,13 +157,17 @@ interface PointsCounterProps {
 const PointsCounter: React.FC<PointsCounterProps> = ({
   cards,
   finalText,
+  hold = false,
   baseDelay = 0,
   delayStep = 350,
 }) => {
   const totals = React.useMemo(() => runningTotals(cards), [cards]);
   const revealed = useRevealCount(cards.length, baseDelay, delayStep);
 
-  const finished = revealed >= cards.length;
+  // El valor oficial del backend solo se muestra cuando todas las cartas
+  // propias aterrizaron Y la compuerta global de resultados está levantada
+  // (puntajes finales de otros spots / cartas del croupier ya visibles).
+  const finished = !hold && revealed >= cards.length;
   return <>{finished ? finalText : String(totals[revealed - 1] ?? 0)}</>;
 };
 
@@ -228,27 +226,100 @@ const CardSlot: React.FC<{
 
 /**
  * El status del jugador (playing / waiting / winner...) también se revela
- * recién cuando terminaron de caer todas sus cartas.
+ * recién cuando terminaron de caer todas sus cartas Y la compuerta global
+ * de resultados (`hold`) está levantada — así un winner/looser jamás aparece
+ * antes de que las cartas del resto de la mesa (croupier incluido) estén
+ * visibles.
  */
 const DelayedStatus: React.FC<{
   cards: string[];
   status: string;
+  hold?: boolean;
   baseDelay?: number;
   delayStep?: number;
-}> = ({ cards, status, baseDelay = 0, delayStep = 350 }) => {
+}> = ({ cards, status, hold = false, baseDelay = 0, delayStep = 350 }) => {
   const revealed = useRevealCount(cards.length, baseDelay, delayStep);
 
-  if (revealed < cards.length) {
+  if (hold || revealed < cards.length) {
     return null;
   }
   return <span className={`spot-status st-${status}`}>{status}</span>;
 };
 
+/* ===== Compuerta global de resultados ===== */
+
+/** Total de cartas sobre la mesa para una instantánea del juego. */
+const countTableCards = (gs: GameStatus): number =>
+  gs.croupier.cards.length +
+  gs.players.reduce((acc, p) => acc + p.cards.length, 0);
+
+/** Margen extra tras aterrizar la última carta antes de mostrar resultados. */
+const RESULT_SETTLE_MS = 450;
+
+/**
+ * Milisegundos que hay que retener los resultados (totales oficiales y
+ * winner/looser) tras recibir una nueva instantánea, para que aparezcan
+ * recién cuando TODAS las cartas de esa actualización ya se vieron en
+ * pantalla: las que sacó el croupier tras un stand/bust y el giro 3D de su
+ * carta oculta. Devuelve 0 si no hay nada nuevo que esperar.
+ */
+const computeGateMs = (prev: GameStatus | null, next: GameStatus): number => {
+  const totalNow = countTableCards(next);
+  const playersBase = next.players.length * 700;
+
+  if (!prev) {
+    // Primera carga del tablero: se reparte todo desde cero.
+    return playersBase + totalNow * 350 + RESULT_SETTLE_MS;
+  }
+
+  const totalPrev = countTableCards(prev);
+
+  // Mano nueva / tablero reseteado (menos cartas que antes): reparto íntegro.
+  if (totalNow < totalPrev) {
+    return playersBase + totalNow * 350 + RESULT_SETTLE_MS;
+  }
+
+  const newCards = totalNow - totalPrev;
+  const croupierFlipped =
+    prev.croupier.cards.includes("hidden card") &&
+    !next.croupier.cards.includes("hidden card");
+
+  if (newCards === 0 && !croupierFlipped) {
+    return 0; // Actualización sin cartas nuevas ni flip: no retenemos nada.
+  }
+
+  // Cada carta tarda ~350ms en el ciclo de reparto + su vuelo de aterrizaje;
+  // el giro del croupier añade 250ms de dorso + 800ms de rotación.
+  const flipExtra = croupierFlipped ? 1050 : 0;
+  const landingBuffer = newCards > 0 ? 700 : 0;
+  return newCards * 350 + flipExtra + landingBuffer + RESULT_SETTLE_MS;
+};
+
 const GameStatusButton: React.FC = () => {
   const [pendingChips, setPendingChips] = useState<number[]>([]);
   const [gameStatus, setGameStatus] = useState<GameStatus | null>(null);
+  // Compuerta de resultados: timestamp (epoch ms) hasta el cual se retienen
+  // los totales oficiales y los winner/looser. 0 = sin retención.
+  const [gateUntil, setGateUntil] = useState(0);
+  // Espejo del último gameStatus aplicado; lo usa computeGateMs para
+  // comparar instantáneas sin depender de closures stale.
+  const gameStatusRef = React.useRef<GameStatus | null>(null);
   const { currentGameId, statusOpen, closeStatus } = useGame();
   const playerId = getUserIdFromCookies();
+
+  // Los resultados están retenidos hasta que expire la compuerta. Este
+  // timeout fuerza el re-render que los revela apenas vence.
+  const resultsReady = gateUntil <= 0 || Date.now() >= gateUntil;
+  useEffect(() => {
+    if (resultsReady) {
+      return;
+    }
+    const t = window.setTimeout(
+      () => setGateUntil((g) => (g > 0 ? 0 : g)),
+      Math.max(gateUntil - Date.now(), 0),
+    );
+    return () => window.clearTimeout(t);
+  }, [gateUntil, resultsReady]);
 
   // El token se lee SIEMPRE fresco: si la cookie desapareció (sesión
   // expirada/borrada), corta todo y manda al login.
@@ -293,15 +364,20 @@ const GameStatusButton: React.FC = () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      // Anti-parpadeo: solo actualizamos el estado si los datos realmente
-      // cambiaron. Si devolvemos la referencia anterior, React no re-renderiza
-      // y el tablero queda estable entre polls.
-      setGameStatus((prev) =>
-        prev && JSON.stringify(prev) === JSON.stringify(responseData)
-          ? prev
-          : (responseData as GameStatus),
-      );
-      return responseData as GameStatus;
+      // Anti-parpadeo + compuerta de resultados: solo actualizamos el estado
+      // si los datos realmente cambiaron (evita re-renders entre polls) y, al
+      // aplicar una instantánea nueva, calculamos cuánto hay que retener los
+      // resultados hasta que TODAS las cartas nuevas aterrizaron en pantalla.
+      const next = responseData as GameStatus;
+      const prev = gameStatusRef.current;
+      if (prev && JSON.stringify(prev) === JSON.stringify(next)) {
+        return next;
+      }
+      const gateMs = computeGateMs(prev, next);
+      gameStatusRef.current = next;
+      setGameStatus(next);
+      setGateUntil(gateMs > 0 ? Date.now() + gateMs : 0);
+      return next;
     } catch (error) {
       console.error("Error getting game status:", error);
       return null;
@@ -319,7 +395,9 @@ const GameStatusButton: React.FC = () => {
     // quedarían visibles los datos del juego anterior hasta el próximo poll)
     // y traemos el estado fresco del juego seleccionado de inmediato.
     setGameStatus(null);
+    gameStatusRef.current = null;
     setPendingChips([]);
+    setGateUntil(0);
     void fetchGameStatus();
 
     const rejoinGame = () => socket.emit("joinGame", gameId);
@@ -763,6 +841,7 @@ const GameStatusButton: React.FC = () => {
                       <PointsCounter
                         cards={gameStatus.croupier.cards}
                         finalText={gameStatus.croupier.total_points.join(", ")}
+                        hold={!resultsReady}
                         baseDelay={gameStatus.players.length * 700}
                       />
                     </div>
@@ -821,6 +900,7 @@ const GameStatusButton: React.FC = () => {
                           <PointsCounter
                             cards={player.cards}
                             finalText={player.total_points.join(", ")}
+                            hold={!resultsReady}
                             baseDelay={pIndex * 700}
                           />{" "}
                           &middot; Bet: <span>${player.bet_amount}</span>{" "}
@@ -828,6 +908,7 @@ const GameStatusButton: React.FC = () => {
                           <DelayedStatus
                             cards={player.cards}
                             status={player.status}
+                            hold={!resultsReady}
                             baseDelay={pIndex * 700}
                           />
                         </div>
