@@ -579,21 +579,6 @@
   margin-top: 8px;
 }
 
-.table-result {
-  position: absolute;
-  top: 14px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.55);
-  border: 1px solid #f5c542;
-  color: #f5c542;
-  font-weight: bold;
-  padding: 6px 18px;
-  border-radius: 20px;
-  font-size: 15px;
-  white-space: nowrap;
-}
-
 /* Fase de apuestas sobre la mesa, contenido centrado */
 .table-felt-bet {
   display: flex;
