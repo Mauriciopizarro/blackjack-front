@@ -105,30 +105,24 @@ interface PointsCounterProps {
 }
 
 /**
- * Cuenta los puntos a medida que las cartas van cayendo: muestra el total
- * acumulado de las cartas ya visibles (sincronizado con la animación de
- * reparto) y, cuando terminó, muestra el valor oficial del backend.
+ * Cantidad de cartas ya "aterrizadas" según la animación de reparto.
+ * Compartido por el contador de puntos y el status del jugador para que
+ * ambos se revelen recién después de que sus cartas aparecieron.
  */
-const PointsCounter: React.FC<PointsCounterProps> = ({
-  cards,
-  finalText,
-  baseDelay = 0,
-  delayStep = 350,
-}) => {
-  const totals = React.useMemo(() => runningTotals(cards), [cards]);
+const useRevealCount = (cardsLength: number, baseDelay: number, delayStep: number): number => {
   const revealedRef = React.useRef(0);
   const [revealed, setRevealed] = useState(0);
 
   useEffect(() => {
     // Nueva mano o reset: volvemos a cero.
-    if (cards.length < revealedRef.current) {
+    if (cardsLength < revealedRef.current) {
       revealedRef.current = 0;
       setRevealed(0);
     }
 
-    const from = Math.min(revealedRef.current, cards.length);
+    const from = Math.min(revealedRef.current, cardsLength);
     const timers: number[] = [];
-    for (let i = from; i < cards.length; i++) {
+    for (let i = from; i < cardsLength; i++) {
       // El número aparece recién DESPUÉS de que la carta aterrizó por completo
       // (vuelo de 550ms + margen), para no hacer spoiler del puntaje.
       const t = window.setTimeout(
@@ -141,7 +135,32 @@ const PointsCounter: React.FC<PointsCounterProps> = ({
       timers.push(t);
     }
     return () => timers.forEach(t => window.clearTimeout(t));
-  }, [cards, cards.length, baseDelay, delayStep]);
+  }, [cardsLength, baseDelay, delayStep]);
+
+  return revealed;
+};
+
+interface PointsCounterProps {
+  cards: string[];
+  /** Valor oficial del backend (total_points.join(', ')) para el estado final. */
+  finalText: string;
+  baseDelay?: number;
+  delayStep?: number;
+}
+
+/**
+ * Cuenta los puntos a medida que las cartas van cayendo: muestra el total
+ * acumulado de las cartas ya visibles (sincronizado con la animación de
+ * reparto) y, cuando terminó, muestra el valor oficial del backend.
+ */
+const PointsCounter: React.FC<PointsCounterProps> = ({
+  cards,
+  finalText,
+  baseDelay = 0,
+  delayStep = 350,
+}) => {
+  const totals = React.useMemo(() => runningTotals(cards), [cards]);
+  const revealed = useRevealCount(cards.length, baseDelay, delayStep);
 
   const finished = revealed >= cards.length;
   return (
@@ -149,6 +168,24 @@ const PointsCounter: React.FC<PointsCounterProps> = ({
       {finished ? finalText : String(totals[revealed - 1] ?? 0)}
     </>
   );
+};
+
+/**
+ * El status del jugador (playing / waiting / winner...) también se revela
+ * recién cuando terminaron de caer todas sus cartas.
+ */
+const DelayedStatus: React.FC<{
+  cards: string[];
+  status: string;
+  baseDelay?: number;
+  delayStep?: number;
+}> = ({ cards, status, baseDelay = 0, delayStep = 350 }) => {
+  const revealed = useRevealCount(cards.length, baseDelay, delayStep);
+
+  if (revealed < cards.length) {
+    return null;
+  }
+  return <span className={`spot-status st-${status}`}>{status}</span>;
 };
 
 const GameStatusButton: React.FC = () => {
@@ -599,7 +636,12 @@ const GameStatusButton: React.FC = () => {
                             baseDelay={pIndex * 700}
                           />
                           {' '}&middot; Bet: <span>${player.bet_amount}</span>
-                          {' '}&middot; <span className={`spot-status st-${player.status}`}>{player.status}</span>
+                          {' '}&middot;{' '}
+                          <DelayedStatus
+                            cards={player.cards}
+                            status={player.status}
+                            baseDelay={pIndex * 700}
+                          />
                         </div>
                         {player.id === playerId && gameStatus.status_game === 'started' && (
                           <div className="player-buttons">
