@@ -12,11 +12,18 @@ import { redirectToLogin } from './utils/session';
 
 
 const Home: React.FC = () => {
-  // Sin token no hay nada que hacer acá: directo al login.
+  // Sin token no hay nada que hacer acá. Chequeo al entrar Y de forma
+  // continua: si borran/expira la cookie mientras estás en la home,
+  // te manda al login sin dejar interactuar.
   useEffect(() => {
-    if (!getTokenFromCookies()) {
-      redirectToLogin();
-    }
+    const checkSession = () => {
+      if (!getTokenFromCookies()) {
+        redirectToLogin();
+      }
+    };
+    checkSession();
+    const interval = window.setInterval(checkSession, 2000);
+    return () => window.clearInterval(interval);
   }, []);
 
   return (

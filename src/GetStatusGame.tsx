@@ -69,8 +69,21 @@ const GameStatusButton: React.FC = () => {
   const [pendingChips, setPendingChips] = useState<number[]>([]);
   const [gameStatus, setGameStatus] = useState<GameStatus | null>(null);
   const { currentGameId, statusOpen, closeStatus } = useGame();
-  const token = getTokenFromCookies();
   const playerId = getUserIdFromCookies();
+
+  // El token se lee SIEMPRE fresco: si la cookie desapareció (sesión
+  // expirada/borrada), corta todo y manda al login.
+  const getAuthHeaders = (): Record<string, string> | null => {
+    const token = getTokenFromCookies();
+    if (!token) {
+      redirectToLogin();
+      return null;
+    }
+    return {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    };
+  };
 
   const fetchGameStatus = useCallback(async () => {
     const gameId = currentGameId;
@@ -79,13 +92,15 @@ const GameStatusButton: React.FC = () => {
       return null;
     }
 
+    const headers = getAuthHeaders();
+    if (!headers) {
+      return null;
+    }
+
     try {
       const response = await fetch(`${API_BASE_URL}/game/status/${gameId}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        headers,
       });
 
       const responseData = await response.json();
@@ -113,7 +128,7 @@ const GameStatusButton: React.FC = () => {
       console.error('Error getting game status:', error);
       return null;
     }
-  }, [currentGameId, token]);
+  }, [currentGameId]);
 
   useEffect(() => {
     if (!statusOpen || !currentGameId) {
@@ -173,13 +188,15 @@ const GameStatusButton: React.FC = () => {
       return;
     }
 
+    const headers = getAuthHeaders();
+    if (!headers) {
+      return;
+    }
+
     try {
       const response = await fetch(`${API_BASE_URL}/game/deal_card/${gameId}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers,
       });
 
       if (!response.ok) {
@@ -208,13 +225,15 @@ const GameStatusButton: React.FC = () => {
       return;
     }
 
+    const headers = getAuthHeaders();
+    if (!headers) {
+      return;
+    }
+
     try {
       const response = await fetch(`${API_BASE_URL}/game/stand/${gameId}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers,
       });
 
       if (!response.ok) {
@@ -249,13 +268,15 @@ const GameStatusButton: React.FC = () => {
       return;
     }
 
+    const headers = getAuthHeaders();
+    if (!headers) {
+      return;
+    }
+
     try {
       const response = await fetch(`${API_BASE_URL}/game/make_bet/${gameId}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers,
         body: JSON.stringify({ bet_amount: numericBet, player_id: playerId }),
       });
 

@@ -47,6 +47,7 @@ const JoinGame: React.FC = () => {
   const fetchLobbyStatus = useCallback(async (id: string) => {
     const token = getTokenFromCookies();
     if (!token) {
+      redirectToLogin();
       return;
     }
 
@@ -142,7 +143,12 @@ const JoinGame: React.FC = () => {
   const handleConfirmClick = async () => {
     const token = getTokenFromCookies();
 
-    if (token) {
+    if (!token) {
+      redirectToLogin();
+      return;
+    }
+
+    {
       try {
         const response = await fetch(`${API_BASE_URL}/game/enroll_player/${gameId}`, {
           method: 'POST',

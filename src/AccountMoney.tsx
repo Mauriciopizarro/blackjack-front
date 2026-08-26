@@ -25,8 +25,7 @@ const WalletButton: React.FC = () => {
     const playerId = getUserIdFromCookies();
     const token = getTokenFromCookies();
     if (!playerId || !token) {
-      setError('No se pudo obtener la sesión');
-      setModalIsOpen(true);
+      redirectToLogin();
       return;
     }
     try {
