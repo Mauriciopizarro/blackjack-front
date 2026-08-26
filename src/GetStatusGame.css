@@ -599,6 +599,41 @@
   animation: cardDeal 0.55s cubic-bezier(0.2, 0.7, 0.3, 1) both;
 }
 
+/* ===== Flip 3D de la carta oculta del croupier ===== */
+.flip-card {
+  width: clamp(40px, 4.4vw, 62px);
+  height: clamp(59px, 6.5vw, 91px);
+  perspective: 700px;
+}
+
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.8s cubic-bezier(0.4, 0.1, 0.2, 1);
+}
+
+.flip-card-inner.flipped {
+  transform: rotateY(180deg);
+}
+
+.flip-face {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 7px;
+  background: #ffffff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.flip-face-front {
+  transform: rotateY(180deg);
+}
+
 @keyframes cardDeal {
   0% {
     opacity: 0;

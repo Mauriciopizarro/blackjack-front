@@ -174,6 +174,40 @@ const PointsCounter: React.FC<PointsCounterProps> = ({
 };
 
 /**
+ * Carta del croupier que se revela con animación de vuelta 3D:
+ * muestra el dorso un instante y gira para descubrir la cara real.
+ */
+const FlipCard: React.FC<{ front: string; style?: React.CSSProperties }> = ({
+  front,
+  style,
+}) => {
+  const [flipped, setFlipped] = useState(false);
+
+  useEffect(() => {
+    // Una pequeña pausa mostrando el dorso antes de girar.
+    const t = window.setTimeout(() => setFlipped(true), 350);
+    return () => window.clearTimeout(t);
+  }, []);
+
+  return (
+    <div className="flip-card deal-anim" style={style}>
+      <div className={`flip-card-inner${flipped ? ' flipped' : ''}`}>
+        <img
+          className="flip-face flip-face-back"
+          src={cardImages['hidden card']}
+          alt="hidden card"
+        />
+        <img
+          className="flip-face flip-face-front"
+          src={cardImages[front]}
+          alt={`${front} card`}
+        />
+      </div>
+    </div>
+  );
+};
+
+/**
  * El status del jugador (playing / waiting / winner...) también se revela
  * recién cuando terminaron de caer todas sus cartas.
  */
@@ -469,22 +503,41 @@ const GameStatusButton: React.FC = () => {
 
   const renderCards = (
     cards: string[],
-    opts?: { baseDelay?: number; delayStep?: number; dealVars?: React.CSSProperties }
+    opts?: {
+      baseDelay?: number;
+      delayStep?: number;
+      dealVars?: React.CSSProperties;
+      flip?: { idx: number };
+    }
   ) => {
     const baseDelay = opts?.baseDelay ?? 0;
     const delayStep = opts?.delayStep ?? 350;
-    return cards.map((card, index) => (
-      <img
-        key={index}
-        src={cardImages[card]}
-        alt={`${card} card`}
-        className="table-card deal-anim"
-        style={{
-          animationDelay: `${baseDelay + index * delayStep}ms`,
-          ...(opts?.dealVars ?? {}),
-        }}
-      />
-    ));
+    return cards.map((card, index) => {
+      if (opts?.flip && opts.flip.idx === index) {
+        return (
+          <FlipCard
+            key={`flip-${index}`}
+            front={card}
+            style={{
+              animationDelay: `${baseDelay + index * delayStep}ms`,
+              ...(opts.dealVars ?? {}),
+            }}
+          />
+        );
+      }
+      return (
+        <img
+          key={index}
+          src={cardImages[card]}
+          alt={`${card} card`}
+          className="table-card deal-anim"
+          style={{
+            animationDelay: `${baseDelay + index * delayStep}ms`,
+            ...(opts?.dealVars ?? {}),
+          }}
+        />
+      );
+    });
   };
 
   const currentPlayer = gameStatus?.players.find(p => p.id === playerId);
@@ -502,6 +555,44 @@ const GameStatusButton: React.FC = () => {
   const clearChips = () => {
     setPendingChips([]);
   };
+
+  // Detección del "flip": cuando una carta OCULTA del croupier pasa a ser
+  // visible (el croupier juega su turno), animamos la vuelta 3D.
+  const croupierCardsRef = React.useRef<string[]>([]);
+  const [croupierFlip, setCroupierFlip] = useState<{
+    idx: number;
+    card: string;
+    nonce: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!gameStatus) {
+      return;
+    }
+    const current = gameStatus.croupier.cards;
+    const previous = croupierCardsRef.current;
+
+    let revealIdx = -1;
+    for (let i = 0; i < current.length; i++) {
+      if (previous[i] === 'hidden card' && current[i] !== 'hidden card') {
+        revealIdx = i;
+      }
+    }
+
+    if (revealIdx >= 0) {
+      setCroupierFlip({ idx: revealIdx, card: current[revealIdx], nonce: Date.now() });
+    } else {
+      const changed =
+        previous.length !== current.length ||
+        previous.some((card, i) => card !== current[i]);
+      if (changed && croupierFlip !== null) {
+        setCroupierFlip(null);
+      }
+    }
+
+    croupierCardsRef.current = current;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameStatus]);
 
   // Modelo de casino dinámico: de lo que te queda sin apostar podés sacar
   // hasta floor(restante / denominación) fichas de cada tipo. Cada ficha
@@ -642,6 +733,7 @@ const GameStatusButton: React.FC = () => {
                       {renderCards(gameStatus.croupier.cards, {
                         baseDelay: gameStatus.players.length * 700,
                         dealVars: { '--deal-dx': '-150px', '--deal-dy': '0px' } as React.CSSProperties,
+                        flip: croupierFlip ? { idx: croupierFlip.idx } : undefined,
                       })}
                     </div>
                     <div className="spot-points">
