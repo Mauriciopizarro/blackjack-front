@@ -12,10 +12,14 @@
 
 /* Barra superior con los botones de partida: flex con gap uniforme,
    anclada a la derecha, a la izquierda del botón del wallet ($) */
+/* Barra superior con los botones de partida: flex con gap uniforme,
+   centrada horizontalmente en la pantalla para dejar libres las esquinas
+   (arriba-derecha: $ y Logout). */
 .topbar {
     position: fixed;
     top: 22px;
-    right: 165px;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     align-items: center;
     gap: 24px;
