@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { API_BASE_URL } from './config';
 import './SignUp.css'
-import { Toaster, toast } from 'sonner'
+import { toast } from 'sonner'
 
 
 const SignUp: React.FC = () => {
@@ -56,7 +56,6 @@ const SignUp: React.FC = () => {
 
     return (
         <>
-        <Toaster position="bottom-center" richColors />
             <div id="container">
                 <form id="signUpForm" onSubmit={handleSubmit}>
                     <label htmlFor="username">Username:</label>

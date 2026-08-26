@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { API_BASE_URL } from './config';
 import Modal from 'react-modal';
-import { Toaster, toast } from 'sonner';
+import { toast } from 'sonner';
 import { getTokenFromCookies } from './utils/GetTokenFromCookies';
 import { getUserIdFromCookies } from './utils/GetUserIdFromCookies';
 import './GetStatusGame.css';
@@ -31,21 +31,38 @@ interface GameStatus {
   status_game: string;
 }
 
+// Cartas locales: Vite las importa estáticamente, las cachea con hash de
+// contenido y las sirve desde el mismo origen (sin dependencia de CDNs externos).
+import cardTwo from './assets/cards/two.png';
+import cardThree from './assets/cards/three.png';
+import cardFour from './assets/cards/four.png';
+import cardFive from './assets/cards/five.png';
+import cardSix from './assets/cards/six.png';
+import cardSeven from './assets/cards/seven.png';
+import cardEight from './assets/cards/eight.png';
+import cardNine from './assets/cards/nine.png';
+import cardTen from './assets/cards/ten.png';
+import cardJack from './assets/cards/jack.png';
+import cardQueen from './assets/cards/queen.png';
+import cardKing from './assets/cards/king.png';
+import cardAce from './assets/cards/ace.png';
+import cardHidden from './assets/cards/hidden.jpg';
+
 const cardImages: { [key: string]: string } = {
-  '2': 'https://cdn.pixabay.com/photo/2012/04/11/13/34/two-28257_1280.png',
-  '3': 'https://cdn.pixabay.com/photo/2012/04/11/13/44/hearts-28297_1280.png',
-  '4': 'https://cdn.pixabay.com/photo/2012/04/11/13/34/four-28259_1280.png',
-  '5': 'https://cdn.pixabay.com/photo/2012/04/11/14/03/hearts-28352_1280.png',
-  '6': 'https://cdn.pixabay.com/photo/2012/04/11/13/58/six-28340_1280.png',
-  '7': 'https://cdn.pixabay.com/photo/2012/04/11/13/54/seven-28328_1280.png',
-  '8': 'https://cdn.pixabay.com/photo/2012/04/11/13/43/diamonds-28289_1280.png',
-  '9': 'https://cdn.pixabay.com/photo/2012/04/11/13/43/diamonds-28290_1280.png',
-  '10': 'https://cdn.pixabay.com/photo/2012/04/11/13/57/ten-28335_1280.png',
-  'J': 'https://cdn.pixabay.com/photo/2012/04/11/14/05/hearts-28358_1280.png',
-  'Q': 'https://cdn.pixabay.com/photo/2012/04/11/13/57/clubs-28334_1280.png',
-  'K': 'https://cdn.pixabay.com/photo/2012/04/11/14/11/king-28374_1280.png',
-  'A': 'https://cdn.pixabay.com/photo/2012/04/11/14/04/ace-28357_1280.png',
-  'hidden card': 'https://img.freepik.com/vector-premium/signo-interrogacion-rojo-grande_122818-781.jpg?w=2000',
+  '2': cardTwo,
+  '3': cardThree,
+  '4': cardFour,
+  '5': cardFive,
+  '6': cardSix,
+  '7': cardSeven,
+  '8': cardEight,
+  '9': cardNine,
+  '10': cardTen,
+  'J': cardJack,
+  'Q': cardQueen,
+  'K': cardKing,
+  'A': cardAce,
+  'hidden card': cardHidden,
 };
 
 const GameStatusButton: React.FC = () => {
@@ -286,7 +303,6 @@ const GameStatusButton: React.FC = () => {
 
   return (
     <>
-      <Toaster position="bottom-center" richColors />
       <div>
         <Modal
           isOpen={statusOpen}

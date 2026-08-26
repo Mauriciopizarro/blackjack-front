@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { API_BASE_URL } from './config';
 import './Login.css'
-import { Toaster, toast } from 'sonner'
+import { toast } from 'sonner'
 
 const Login: React.FC = () => {
     const [username, setUsername] = useState<string>('');
@@ -52,7 +52,6 @@ const Login: React.FC = () => {
 
     return (
         <>
-        <Toaster position="bottom-center" richColors />
         <div className="login-container">
             <h2>Login</h2>
             <form onSubmit={handleSubmit} className="login-form">
