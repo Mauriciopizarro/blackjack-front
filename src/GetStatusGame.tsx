@@ -300,6 +300,10 @@ const GameStatusButton: React.FC = () => {
     setPendingChips([]);
   };
 
+  const winners = gameStatus
+    ? gameStatus.players.filter(p => p.status === 'winner').map(p => p.name)
+    : [];
+
   return (
     <>
       <div>
@@ -497,14 +501,9 @@ const GameStatusButton: React.FC = () => {
 
                   {gameStatus.status_game === 'finished' && (
                     <div className="table-result">
-                      {(() => {
-                        const winners = gameStatus.players
-                          .filter(p => p.status === 'winner')
-                          .map(p => p.name);
-                        return winners.length
-                          ? `🏆 ${winners.join(', ')} win${winners.length > 1 ? '' : 's'}!`
-                          : 'Round finished';
-                      })()}
+                      {winners.length
+                        ? `🏆 ${winners.join(', ')} win${winners.length > 1 ? '' : 's'}!`
+                        : 'Round finished'}
                     </div>
                   )}
                 </div>
