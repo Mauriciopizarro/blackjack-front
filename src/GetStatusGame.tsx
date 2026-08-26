@@ -65,6 +65,91 @@ const cardImages: { [key: string]: string } = {
   'hidden card': cardHidden,
 };
 
+// Valores de blackjack para el conteo animado de puntos. El total OFICIAL
+// (con ases flexibles y pares de puntaje) lo provee el backend en
+// total_points; este cálculo solo alimenta la animación mientras las cartas
+// van cayendo.
+const cardValue = (card: string): number => {
+  if (card === 'A') return 11;
+  const n = Number(card);
+  return Number.isNaN(n) ? 10 : n;
+};
+
+/** Total acumulado carta a carta, bajando el as de 11 a 1 si se pasa de 21. */
+const runningTotals = (cards: string[]): number[] => {
+  let total = 0;
+  let softAces = 0;
+  const totals: number[] = [];
+  for (const card of cards) {
+    if (card === 'A') {
+      softAces += 1;
+      total += 11;
+    } else {
+      total += cardValue(card);
+    }
+    while (total > 21 && softAces > 0) {
+      total -= 10;
+      softAces -= 1;
+    }
+    totals.push(total);
+  }
+  return totals;
+};
+
+interface PointsCounterProps {
+  cards: string[];
+  /** Valor oficial del backend (total_points.join(', ')) para el estado final. */
+  finalText: string;
+  baseDelay?: number;
+  delayStep?: number;
+}
+
+/**
+ * Cuenta los puntos a medida que las cartas van cayendo: muestra el total
+ * acumulado de las cartas ya visibles (sincronizado con la animación de
+ * reparto) y, cuando terminó, muestra el valor oficial del backend.
+ */
+const PointsCounter: React.FC<PointsCounterProps> = ({
+  cards,
+  finalText,
+  baseDelay = 0,
+  delayStep = 350,
+}) => {
+  const totals = React.useMemo(() => runningTotals(cards), [cards]);
+  const revealedRef = React.useRef(0);
+  const [revealed, setRevealed] = useState(0);
+
+  useEffect(() => {
+    // Nueva mano o reset: volvemos a cero.
+    if (cards.length < revealedRef.current) {
+      revealedRef.current = 0;
+      setRevealed(0);
+    }
+
+    const from = Math.min(revealedRef.current, cards.length);
+    const timers: number[] = [];
+    for (let i = from; i < cards.length; i++) {
+      // El punto sube cuando la carta termina su vuelo (~400ms de los 550ms).
+      const t = window.setTimeout(
+        () => {
+          revealedRef.current = i + 1;
+          setRevealed(i + 1);
+        },
+        baseDelay + i * delayStep + 400
+      );
+      timers.push(t);
+    }
+    return () => timers.forEach(t => window.clearTimeout(t));
+  }, [cards, cards.length, baseDelay, delayStep]);
+
+  const finished = revealed >= cards.length;
+  return (
+    <>
+      {finished ? finalText : String(totals[revealed - 1] ?? 0)}
+    </>
+  );
+};
+
 const GameStatusButton: React.FC = () => {
   const [pendingChips, setPendingChips] = useState<number[]>([]);
   const [gameStatus, setGameStatus] = useState<GameStatus | null>(null);
@@ -457,7 +542,12 @@ const GameStatusButton: React.FC = () => {
                       })}
                     </div>
                     <div className="spot-points">
-                      Points: <span>{gameStatus.croupier.total_points.join(', ')}</span>
+                      Points:{' '}
+                      <PointsCounter
+                        cards={gameStatus.croupier.cards}
+                        finalText={gameStatus.croupier.total_points.join(', ')}
+                        baseDelay={gameStatus.players.length * 700}
+                      />
                     </div>
                   </div>
 
@@ -505,7 +595,12 @@ const GameStatusButton: React.FC = () => {
                           })}
                         </div>
                         <div className="spot-points">
-                          Points: <span>{player.total_points.join(', ')}</span>
+                          Points:{' '}
+                          <PointsCounter
+                            cards={player.cards}
+                            finalText={player.total_points.join(', ')}
+                            baseDelay={pIndex * 700}
+                          />
                           {' '}&middot; Bet: <span>${player.bet_amount}</span>
                           {' '}&middot; <span className={`spot-status st-${player.status}`}>{player.status}</span>
                         </div>
