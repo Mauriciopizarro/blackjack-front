@@ -1,10 +1,13 @@
 /* Botón de logout — esquina superior derecha, accesible desde cualquier scroll.
-   Paleta coherente con el resto de botones amarillos del juego (#ffcc00). */
+   Paleta coherente con el resto de botones amarillos del juego (#ffcc00).
+   z-index 500: por encima del contenido de la página (topbar=10) pero POR
+   DEBAJO de los overlays/modales (game-status-overlay=999, modales=1000),
+   para que queden tapados cuando se abre una partida u otro modal. */
 .logout-button {
   position: fixed;
   top: 22px;
   right: 22px;
-  z-index: 1000;
+  z-index: 500;
   display: inline-flex;
   align-items: center;
   gap: 8px;
