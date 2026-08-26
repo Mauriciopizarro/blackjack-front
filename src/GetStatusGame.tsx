@@ -65,6 +65,9 @@ const cardImages: { [key: string]: string } = {
   'hidden card': cardHidden,
 };
 
+// Denominaciones de casino, de mayor a menor para el desglose del saldo.
+const CHIP_DENOMS = [1000, 500, 100, 25, 10, 5, 1];
+
 // Valores de blackjack para el conteo animado de puntos. El total OFICIAL
 // (con ases flexibles y pares de puntaje) lo provee el backend en
 // total_points; este cálculo solo alimenta la animación mientras las cartas
@@ -296,6 +299,41 @@ const GameStatusButton: React.FC = () => {
     };
   }, [fetchGameStatus, statusOpen, currentGameId]);
 
+  // Saldo del jugador: se consulta al abrir el modal y alimenta la
+  // conversión a fichas (stock limitado por denominación).
+  const [walletAmount, setWalletAmount] = useState<number | null>(null);
+  useEffect(() => {
+    if (!statusOpen || !currentGameId) {
+      return;
+    }
+    const playerIdFresh = getUserIdFromCookies();
+    const headers = getAuthHeaders();
+    if (!headers || !playerIdFresh) {
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/wallet/get/${playerIdFresh}`, { headers });
+        if (!response.ok || isSessionExpired(response.status)) {
+          if (isSessionExpired(response.status)) {
+            redirectToLogin();
+          }
+          return;
+        }
+        const data = await response.json();
+        if (!cancelled) {
+          setWalletAmount(Math.max(0, Math.floor(Number(data.amount ?? 0))));
+        }
+      } catch (error) {
+        console.error('Error fetching wallet for chips:', error);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [statusOpen, currentGameId]);
+
   const notifyGameUpdated = (gameId: string, statusGame?: string) => {
     socket.emit('gameUpdated', { gameId });
 
@@ -390,6 +428,10 @@ const GameStatusButton: React.FC = () => {
       toast.error('Enter a valid bet amount');
       return;
     }
+    if (walletAmount !== null && numericBet > walletAmount) {
+      toast.error('Insufficient balance for this bet');
+      return;
+    }
 
     const headers = getAuthHeaders();
     if (!headers) {
@@ -461,6 +503,28 @@ const GameStatusButton: React.FC = () => {
     setPendingChips([]);
   };
 
+  // Desglose de casino: el saldo se convierte en fichas por denominación
+  // (greedy, de mayor a menor). Ese es el stock total disponible.
+  const baseChipCounts = React.useMemo(() => {
+    const counts: Record<number, number> = {};
+    let remaining = walletAmount ?? 0;
+    for (const denom of CHIP_DENOMS) {
+      const count = Math.floor(remaining / denom);
+      counts[denom] = count;
+      remaining -= count * denom;
+    }
+    return counts;
+  }, [walletAmount]);
+
+  // Fichas ya puestas en la mesa, por denominación.
+  const placedByDenom = React.useMemo(() => {
+    const counts: Record<number, number> = {};
+    for (const chip of pendingChips) {
+      counts[chip] = (counts[chip] ?? 0) + 1;
+    }
+    return counts;
+  }, [pendingChips]);
+
   return (
     <>
       <div>
@@ -503,21 +567,29 @@ const GameStatusButton: React.FC = () => {
                   ) : (
                     <div className="chips-bet">
                       <p className="chips-total">
-                        Your bet: <span className="chips-total-amount">${pendingBetAmount}</span>
+                        Balance: <span className="chips-total-balance">${walletAmount ?? '…'}</span>
+                        {' '}· Your bet: <span className="chips-total-amount">${pendingBetAmount}</span>
                       </p>
 
                       <div className="chip-rack">
-                        {[100, 500, 1000].map(denom => (
-                          <button
-                            key={denom}
-                            type="button"
-                            className="chip"
-                            data-denom={denom}
-                            onClick={() => addChip(denom)}
-                          >
-                            <span className="chip-inner">{denom}</span>
-                          </button>
-                        ))}
+                        {[...CHIP_DENOMS].reverse().map(denom => {
+                          const available =
+                            (baseChipCounts[denom] ?? 0) - (placedByDenom[denom] ?? 0);
+                          return (
+                            <button
+                              key={denom}
+                              type="button"
+                              className="chip"
+                              data-denom={denom}
+                              onClick={() => addChip(denom)}
+                              disabled={available <= 0}
+                              title={`${available} x $${denom} left`}
+                            >
+                              <span className="chip-inner">{denom}</span>
+                              <span className="chip-count">{available}</span>
+                            </button>
+                          );
+                        })}
                       </div>
 
                       <div className="chips-stack">
