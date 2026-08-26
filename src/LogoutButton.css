@@ -1,0 +1,35 @@
+/* Botón de logout — esquina superior derecha, accesible desde cualquier scroll.
+   Paleta coherente con el resto de botones amarillos del juego (#ffcc00). */
+.logout-button {
+  position: fixed;
+  top: 22px;
+  right: 22px;
+  z-index: 1000;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background-color: #ffcc00;
+  color: #1c1c1c;
+  border: none;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  transition: background-color 0.15s ease, transform 0.05s ease, box-shadow 0.15s ease;
+}
+
+.logout-button:hover {
+  background-color: #e6b800;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+}
+
+.logout-button:active {
+  transform: scale(0.97);
+}
+
+.logout-button:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
