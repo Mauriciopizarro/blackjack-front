@@ -278,6 +278,11 @@
   margin: 0;
 }
 
+.chips-total-balance {
+  color: #4ade80;
+  font-weight: bold;
+}
+
 .chips-total-amount {
   color: #ffcc00;
   font-weight: bold;
@@ -292,26 +297,70 @@
 }
 
 .chip {
-  --chip-color: #e6b800;
+  --chip-color: #d4a017;
+  --chip-spot: #f4f1e8;
+  --chip-text: #ffffff;
+  position: relative;
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  border: 4px dashed #1c1c1c;
-  background: radial-gradient(circle, #fff 0 30%, var(--chip-color) 30% 100%);
-  color: #1c1c1c;
+  border: none;
+  padding: 0;
+  cursor: pointer;
   font-weight: bold;
   font-size: 16px;
-  cursor: pointer;
+  color: var(--chip-text);
+  /* Canto realista: manchas claras alternadas sobre el color base */
+  background:
+    radial-gradient(
+      circle at 50% 50%,
+      color-mix(in srgb, var(--chip-color) 80%, #ffffff) 0 56%,
+      transparent 57%
+    ),
+    repeating-conic-gradient(
+      from 8deg,
+      var(--chip-spot) 0deg 22deg,
+      var(--chip-color) 22deg 60deg
+    );
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.3),
+    inset 0 2px 3px rgba(255, 255, 255, 0.25),
+    inset 0 -3px 4px rgba(0, 0, 0, 0.3),
+    0 5px 10px rgba(0, 0, 0, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
   transition: transform 0.12s ease;
 }
 
-.chip[data-denom="100"]       { --chip-color: #4a90d9; }
-.chip[data-denom="500"]       { --chip-color: #c5352b; }
-.chip[data-denom="1000"]      { --chip-color: #1f9a52; }
+/* Colores de casino por denominación */
+.chip[data-denom="1"]          { --chip-color: #b8b8b8; }
+.chip[data-denom="5"]          { --chip-color: #c5352b; }
+.chip[data-denom="10"]         { --chip-color: #4a90d9; }
+.chip[data-denom="25"]         { --chip-color: #1f9a52; }
+.chip[data-denom="50"]         { --chip-color: #e67e22; }
+.chip[data-denom="100"]        { --chip-color: #2b2b2b; }
+.chip[data-denom="500"]        { --chip-color: #7d3c98; }
+.chip[data-denom="1000"]       { --chip-color: #d4a017; }
+
+.chip:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.chip-count {
+  position: absolute;
+  bottom: -6px;
+  right: -6px;
+  background: #ffcc00;
+  color: #1c1c1c;
+  font-size: 11px;
+  font-weight: bold;
+  border-radius: 10px;
+  padding: 1px 6px;
+  border: 2px solid #1c1c1c;
+}
 
 .chip:hover {
   transform: translateY(-3px);
@@ -322,34 +371,88 @@
 }
 
 .chip-inner {
-  background: rgba(255, 255, 255, 0.75);
+  width: 66%;
+  height: 66%;
   border-radius: 50%;
-  padding: 4px 8px;
+  background: var(--chip-color);
+  border: 2px dashed rgba(255, 255, 255, 0.55);
+  box-shadow:
+    inset 0 1px 3px rgba(255, 255, 255, 0.35),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.3);
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Denominaciones claras: texto oscuro para contraste */
+.chip[data-denom="1"],
+.chip[data-denom="50"],
+.chip[data-denom="1000"] {
+  --chip-text: #1c1c1c;
 }
 
 .chips-stack {
   display: flex;
-  flex-direction: row-reverse;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: flex-end;
   justify-content: center;
-  min-height: 34px;
-  gap: -2px;
+  min-height: 56px;
+  gap: 10px;
 }
 
-.chip-stacked {
-  width: 40px;
-  height: 40px;
+/* Pila por denominación: una sola ficha visual (con grosor simulado) + badge
+   con la cantidad, sin importar cuántas fichas de ese valor se hayan puesto. */
+.chips-pile {
+  position: relative;
+  width: 44px;
+  height: 46px;
+}
+
+.chips-pile[data-denom="1"]    { --chip-color: #b8b8b8; }
+.chips-pile[data-denom="5"]    { --chip-color: #c5352b; }
+.chips-pile[data-denom="10"]   { --chip-color: #4a90d9; }
+.chips-pile[data-denom="25"]   { --chip-color: #1f9a52; }
+.chips-pile[data-denom="50"]   { --chip-color: #e67e22; }
+.chips-pile[data-denom="100"]  { --chip-color: #2b2b2b; }
+.chips-pile[data-denom="500"]  { --chip-color: #7d3c98; }
+.chips-pile[data-denom="1000"] { --chip-color: #d4a017; }
+
+.chips-pile-chip {
+  --chip-spot: #f4f1e8;
+  position: absolute;
+  inset: 0 0 6px 0;
   border-radius: 50%;
-  border: 3px dashed #1c1c1c;
-  display: inline-block;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-  margin-left: -12px;
+  background:
+    radial-gradient(
+      circle at 50% 46%,
+      color-mix(in srgb, var(--chip-color) 78%, #ffffff) 0 52%,
+      transparent 53%
+    ),
+    repeating-conic-gradient(
+      from 8deg,
+      var(--chip-spot) 0deg 22deg,
+      var(--chip-color) 22deg 60deg
+    );
+  box-shadow:
+    inset 0 -2px 3px rgba(0, 0, 0, 0.35),
+    0 2px 0 -1px var(--chip-color),
+    0 4px 0 -1px color-mix(in srgb, var(--chip-color) 70%, #000),
+    0 6px 0 -1px color-mix(in srgb, var(--chip-color) 45%, #000),
+    0 7px 8px rgba(0, 0, 0, 0.5);
 }
 
-.chip-stacked-denom-100  { background: radial-gradient(circle, #fff 0 30%, #4a90d9 30% 100%); }
-.chip-stacked-denom-500  { background: radial-gradient(circle, #fff 0 30%, #c5352b 30% 100%); }
-.chip-stacked-denom-1000 { background: radial-gradient(circle, #fff 0 30%, #1f9a52 30% 100%); }
+.chips-pile-count {
+  position: absolute;
+  top: -8px;
+  right: -10px;
+  background: #ffcc00;
+  color: #1c1c1c;
+  font-size: 11px;
+  font-weight: bold;
+  border-radius: 10px;
+  padding: 1px 6px;
+  border: 2px solid #1c1c1c;
+}
 
 .chips-actions {
   display: flex;
@@ -443,27 +546,6 @@
   margin-top: 4px;
 }
 
-.table-shoe {
-  position: absolute;
-  top: clamp(14px, 2vh, 20px);
-  right: clamp(16px, 2vw, 28px);
-  width: clamp(36px, 4vw, 52px);
-  height: clamp(52px, 5.6vw, 74px);
-}
-
-.shoe-card {
-  position: absolute;
-  inset: 0;
-  border-radius: 6px;
-  border: 2px solid #fff;
-  background: repeating-linear-gradient(45deg, #b3121f 0 6px, #8e0e18 6px 12px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
-}
-
-.shoe-card:nth-child(1) { transform: rotate(-7deg) translate(-5px, 3px); }
-.shoe-card:nth-child(2) { transform: rotate(-2deg) translate(2px, 0); }
-.shoe-card:nth-child(3) { transform: rotate(4deg) translate(8px, -2px); }
-
 .dealer-spot {
   position: absolute;
   top: clamp(64px, 10vh, 100px);
@@ -474,6 +556,15 @@
   align-items: center;
   gap: 4px;
   z-index: 3;
+}
+
+/* La X de cerrar debe quedar POR ENCIMA del paño de la mesa (.table-felt),
+   que al ser posterior en el DOM la tapaba con su borde de madera. */
+.game-status-modal .close-button {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 50;
 }
 
 .spot-name {
@@ -493,7 +584,7 @@
   align-items: center;
   flex-wrap: wrap;
   justify-content: center;
-  max-width: clamp(160px, 20vw, 280px);
+  max-width: clamp(220px, 30vw, 440px);
 }
 
 .table-card {
@@ -506,6 +597,41 @@
 
 .deal-anim {
   animation: cardDeal 0.55s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+/* ===== Flip 3D de la carta oculta del croupier ===== */
+.flip-card {
+  width: clamp(40px, 4.4vw, 62px);
+  height: clamp(59px, 6.5vw, 91px);
+  perspective: 700px;
+}
+
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.8s cubic-bezier(0.4, 0.1, 0.2, 1);
+}
+
+.flip-card-inner.flipped {
+  transform: rotateY(180deg);
+}
+
+.flip-face {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 7px;
+  background: #ffffff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.flip-face-front {
+  transform: rotateY(180deg);
 }
 
 @keyframes cardDeal {
@@ -589,21 +715,6 @@
 
 .player-buttons {
   margin-top: 8px;
-}
-
-.table-result {
-  position: absolute;
-  top: 14px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.55);
-  border: 1px solid #f5c542;
-  color: #f5c542;
-  font-weight: bold;
-  padding: 6px 18px;
-  border-radius: 20px;
-  font-size: 15px;
-  white-space: nowrap;
 }
 
 /* Fase de apuestas sobre la mesa, contenido centrado */

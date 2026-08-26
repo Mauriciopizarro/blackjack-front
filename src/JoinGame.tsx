@@ -6,6 +6,7 @@ import { getTokenFromCookies } from './utils/GetTokenFromCookies';
 import { getUserIdFromCookies } from './utils/GetUserIdFromCookies';
 import { toast } from 'sonner';
 import { createSocket } from './utils/socket';
+import { isSessionExpired, redirectToLogin } from './utils/session';
 import { useGame } from './GameContext';
 
 Modal.setAppElement('#root');
@@ -46,6 +47,7 @@ const JoinGame: React.FC = () => {
   const fetchLobbyStatus = useCallback(async (id: string) => {
     const token = getTokenFromCookies();
     if (!token) {
+      redirectToLogin();
       return;
     }
 
@@ -60,6 +62,9 @@ const JoinGame: React.FC = () => {
 
       if (!response.ok) {
         // La partida puede tardar unos instantes en registrarse luego del join.
+        if (isSessionExpired(response.status)) {
+          redirectToLogin();
+        }
         return;
       }
 
@@ -138,7 +143,12 @@ const JoinGame: React.FC = () => {
   const handleConfirmClick = async () => {
     const token = getTokenFromCookies();
 
-    if (token) {
+    if (!token) {
+      redirectToLogin();
+      return;
+    }
+
+    {
       try {
         const response = await fetch(`${API_BASE_URL}/game/enroll_player/${gameId}`, {
           method: 'POST',
@@ -150,6 +160,11 @@ const JoinGame: React.FC = () => {
         });
 
         const responseData = await response.json();
+
+        if (isSessionExpired(response.status, responseData.detail)) {
+          redirectToLogin();
+          return;
+        }
 
         if (response.status !== 200) {
           toast.error(responseData.detail);

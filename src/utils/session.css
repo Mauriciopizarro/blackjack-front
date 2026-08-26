@@ -1,0 +1,54 @@
+/* Modal bloqueante de sesión expirada — inyectado por src/utils/session.ts */
+#session-expired-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.session-expired-card {
+  background-color: #1c1c1c;
+  border: 2px solid #ffcc00;
+  border-radius: 14px;
+  padding: 36px 44px;
+  text-align: center;
+  color: #ffffff;
+  max-width: 380px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+}
+
+.session-expired-icon {
+  font-size: 42px;
+  margin-bottom: 10px;
+}
+
+.session-expired-title {
+  color: #ffcc00;
+  font-size: 24px;
+  margin: 0 0 10px 0;
+}
+
+.session-expired-message {
+  color: #bbbbbb;
+  font-size: 15px;
+  line-height: 1.5;
+  margin: 0 0 24px 0;
+}
+
+.session-expired-login-button {
+  background-color: #ffcc00;
+  color: #1c1c1c;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 40px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.session-expired-login-button:hover {
+  background-color: #e6b800;
+}

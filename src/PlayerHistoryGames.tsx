@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { API_BASE_URL } from './config';
 import './PlayerHistoryGames.css';
 import { getUserIdFromCookies } from './utils/GetUserIdFromCookies';
+import { getTokenFromCookies } from './utils/GetTokenFromCookies';
 import { createSocket } from './utils/socket';
+import { isSessionExpired, redirectToLogin } from './utils/session';
 import Skeleton, { SkeletonTheme } from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 
@@ -21,10 +23,19 @@ const PlayerHistoryGames: React.FC = () => {
 
   useEffect(() => {
     const playerId = getUserIdFromCookies();
+    const token = getTokenFromCookies();
+    if (!playerId || !token) {
+      redirectToLogin();
+      return;
+    }
     const fetchGames = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/player/history/${playerId}`);
         if (!response.ok || !playerId) {
+          if (isSessionExpired(response.status)) {
+            redirectToLogin();
+            return;
+          }
           throw new Error('Error fetching data');
         }
         const data = await response.json();

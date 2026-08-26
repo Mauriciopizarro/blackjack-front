@@ -6,6 +6,7 @@ import { getTokenFromCookies } from './utils/GetTokenFromCookies';
 import { toast } from 'sonner';
 import type { Socket } from 'socket.io-client';
 import { createSocket } from './utils/socket';
+import { isSessionExpired, redirectToLogin } from './utils/session';
 import { useGame } from './GameContext';
 
 Modal.setAppElement('#root');
@@ -47,6 +48,11 @@ const CreateGame: React.FC = () => {
                 });
 
                 const responseData = await response.json();
+
+                if (isSessionExpired(response.status, responseData.detail)) {
+                    redirectToLogin();
+                    return;
+                }
 
                 if (response.ok) {
                     setCurrentGameId(responseData.id);
@@ -95,6 +101,10 @@ const CreateGame: React.FC = () => {
                 socketRef.current?.emit('newGame');
             } else {
                 const errorData = await response.json();
+                if (isSessionExpired(response.status, errorData.detail)) {
+                    redirectToLogin();
+                    return;
+                }
                 toast.error(errorData.detail);
             }
         } catch (error) {
