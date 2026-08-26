@@ -13,7 +13,6 @@ interface Game {
 }
 
 const socket = createSocket();
-const playerId = getUserIdFromCookies();
 
 const PlayerHistoryGames: React.FC = () => {
   const [games, setGames] = useState<Game[]>([]);
@@ -21,14 +20,16 @@ const PlayerHistoryGames: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const playerId = getUserIdFromCookies();
     const fetchGames = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/player/history/${playerId}`);
-        if (!response.ok) {
+        if (!response.ok || !playerId) {
           throw new Error('Error fetching data');
         }
         const data = await response.json();
-        const latestGames = data.results?.reverse().slice(0, 5) || [];
+        const results = Array.isArray(data.results) ? data.results : [];
+        const latestGames = [...results].reverse().slice(0, 5);
         setGames(latestGames);
       } catch (err) {
         setError('Failed to fetch game history');

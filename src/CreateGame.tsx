@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { API_BASE_URL } from './config';
 import Modal from 'react-modal';
 import './CreateGame.css';
 import { getTokenFromCookies } from './utils/GetTokenFromCookies';
-import { Toaster, toast } from 'sonner';
+import { toast } from 'sonner';
 import type { Socket } from 'socket.io-client';
 import { createSocket } from './utils/socket';
 import { useGame } from './GameContext';
@@ -18,18 +18,24 @@ interface GameInfo {
 const CreateGame: React.FC = () => {
     const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
     const [errorMessage, setErrorMessage] = useState<string>('');
-    const [socket, setSocket] = useState<Socket | null>(null);
+    // El socket es un valor transitorio, no estado de render: usamos una ref.
+    // Además ya es un singleton desde utils/socket, así que lo guardamos una vez.
+    const socketRef = useRef<Socket | null>(null);
+    const [starting, setStarting] = useState(false);
     const { setCurrentGameId, openStatus } = useGame();
 
     useEffect(() => {
-        const socket = createSocket();
-        setSocket(socket);
+        // createSocket() devuelve el singleton; lo guardamos sin disparar re-renders.
+        socketRef.current = createSocket();
+        return () => {
+            socketRef.current = null;
+        };
     }, []);
 
-    const handleCreateGameClick = async () => {
+    const handleCreateGameClick = useCallback(async () => {
         const token = getTokenFromCookies();
 
-        if (token && socket) {
+        if (token && socketRef.current) {
             try {
                 const response = await fetch(`${API_BASE_URL}/game/create`, {
                     method: 'POST',
@@ -45,7 +51,7 @@ const CreateGame: React.FC = () => {
                 if (response.ok) {
                     setCurrentGameId(responseData.id);
                     setGameInfo(responseData);
-                } else if (responseData.detail.includes("is already created, please start them")) {
+                } else if (responseData.detail?.includes("is already created, please start them")) {
                     const gameIdMatch = responseData.detail.match(/Game id ([a-f0-9-]+) is already created/);
                     if (gameIdMatch) {
                         const existingGameId = gameIdMatch[1];
@@ -64,13 +70,14 @@ const CreateGame: React.FC = () => {
                 setErrorMessage('Error creating the game');
             }
         }
-    };
+    }, [setCurrentGameId]);
 
-    const startGame = async () => {
+    const startGame = useCallback(async () => {
         if (!gameInfo) {
             return;
         }
 
+        setStarting(true);
         try {
             const token = getTokenFromCookies();
             const response = await fetch(`${API_BASE_URL}/game/start/${gameInfo.id}`, {
@@ -84,16 +91,18 @@ const CreateGame: React.FC = () => {
             if (response.ok) {
                 toast.success('Game started successfully!');
                 openStatus();
-                socket?.emit('gameUpdated', { gameId: gameInfo.id });
-                socket?.emit('newGame');
+                socketRef.current?.emit('gameUpdated', { gameId: gameInfo.id });
+                socketRef.current?.emit('newGame');
             } else {
                 const errorData = await response.json();
                 toast.error(errorData.detail);
             }
         } catch (error) {
             setErrorMessage('Error starting the game');
+        } finally {
+            setStarting(false);
         }
-    };
+    }, [gameInfo, openStatus]);
 
     const closeModal = () => {
         setGameInfo(null);
@@ -102,7 +111,6 @@ const CreateGame: React.FC = () => {
 
     return (
         <>
-            <Toaster position="bottom-center" richColors />
             <div className="create-game-container">
                 <button className='createButton' onClick={handleCreateGameClick}>Create Game</button>
 
@@ -120,7 +128,10 @@ const CreateGame: React.FC = () => {
                             
                             <p>f you don't want to add anyone else to this game, you can click the start button.</p>
                             <div className="button-container">
-                                <button onClick={() => {startGame(); closeModal();}}>Start Game</button>
+                                <button
+    onClick={async () => { await startGame(); closeModal(); }}
+    disabled={starting}
+>{starting ? 'Starting...' : 'Start Game'}</button>
                                 <button className="closebutton" onClick={closeModal}>Close</button>
                             </div>
                         </>

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, type ReactNode } from 'react';
+import React, { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 
 interface GameContextValue {
   currentGameId: string | null;
@@ -22,10 +22,15 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
   const openStatus = () => setStatusOpen(true);
   const closeStatus = () => setStatusOpen(false);
 
+  // value memoizado: evita que todos los consumidores re-rendericen ante
+  // cualquier cambio de contexto aunque su slice no haya cambiado.
+  const value = useMemo<GameContextValue>(
+    () => ({ currentGameId, setCurrentGameId, statusOpen, openStatus, closeStatus }),
+    [currentGameId, statusOpen]
+  );
+
   return (
-    <GameContext.Provider
-      value={{ currentGameId, setCurrentGameId, statusOpen, openStatus, closeStatus }}
-    >
+    <GameContext.Provider value={value}>
       {children}
     </GameContext.Provider>
   );

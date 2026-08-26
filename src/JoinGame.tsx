@@ -4,7 +4,7 @@ import Modal from 'react-modal';
 import './JoinGame.css';
 import { getTokenFromCookies } from './utils/GetTokenFromCookies';
 import { getUserIdFromCookies } from './utils/GetUserIdFromCookies';
-import { Toaster, toast } from 'sonner';
+import { toast } from 'sonner';
 import { createSocket } from './utils/socket';
 import { useGame } from './GameContext';
 
@@ -66,12 +66,16 @@ const JoinGame: React.FC = () => {
       const data: LobbyData = await response.json();
       setLobbyStatus(data.status ?? '');
       setLobbyAdmin(data.admin ? { id: data.admin.id, name: data.admin.name } : null);
-      setLobbyPlayers(
-        (data.players ?? []).map((player: LobbyUser) => ({
+      // Anti-parpadeo: cada poll crea arrays nuevos; solo seteamos si cambió
+      // para no re-renderizar el lobby aun cuando no cambió nada (igual que
+      // GetStatusGame/MyGames).
+      setLobbyPlayers(prev => {
+        const next = (data.players ?? []).map((player: LobbyUser) => ({
           id: player.id,
           name: player.name,
-        }))
-      );
+        }));
+        return JSON.stringify(prev) === JSON.stringify(next) ? prev : next;
+      });
 
       // Si la partida ya está jugándose o terminó, ya no corresponde esperar al host.
       if (data.status === 'started') {
@@ -86,7 +90,7 @@ const JoinGame: React.FC = () => {
     } catch (error) {
       console.error('Error fetching lobby status:', error);
     }
-  }, []);
+  }, [openStatus, setCurrentGameId]);
 
   // Mientras el lobby esté abierto: refrescamos los jugadores periódicamente,
   // nos unimos a la sala del juego por socket (para enterarnos cuando el host
@@ -125,7 +129,7 @@ const JoinGame: React.FC = () => {
       socket.off('newGame', handleNewGame);
       socket.off('gameUpdated', handleGameUpdated);
     };
-  }, [lobbyOpen, joinedGameId, fetchLobbyStatus]);
+  }, [lobbyOpen, joinedGameId, fetchLobbyStatus, openStatus]);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setGameId(event.target.value);
@@ -174,7 +178,6 @@ const JoinGame: React.FC = () => {
 
   return (
     <>
-      <Toaster position="bottom-center" richColors />
       <div className="join-game-container">
         <button className="join-game-button" onClick={handleJoinClick}>
           Join Game

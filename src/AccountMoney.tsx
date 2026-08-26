@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { API_BASE_URL } from './config';
-import axios from 'axios';
 import Modal from 'react-modal';
 import './AccountMoney.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -11,9 +10,6 @@ import { getTokenFromCookies } from './utils/GetTokenFromCookies';
 
 Modal.setAppElement('#root'); // Asegúrate de que el ID coincida con el de tu div principal en index.html
 
-
-const playerId = getUserIdFromCookies();
-const token = getTokenFromCookies();
 
 interface WalletData {
   amount: number | string;
@@ -25,13 +21,24 @@ const WalletButton: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchWalletData = async () => {
+    const playerId = getUserIdFromCookies();
+    const token = getTokenFromCookies();
+    if (!playerId || !token) {
+      setError('No se pudo obtener la sesión');
+      setModalIsOpen(true);
+      return;
+    }
     try {
-        const response = await axios.get(`${API_BASE_URL}/wallet/get/${playerId}`, {
+        const response = await fetch(`${API_BASE_URL}/wallet/get/${playerId}`, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
         });
-      setWalletData(response.data);
+        if (!response.ok) {
+          throw new Error('Error fetching wallet');
+        }
+        const data: WalletData = await response.json();
+      setWalletData(data);
       setModalIsOpen(true);
     } catch (err) {
       setError('Error al obtener los datos del monedero');

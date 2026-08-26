@@ -15,7 +15,6 @@ interface LobbyItem {
 }
 
 const socket = createSocket();
-const playerId = getUserIdFromCookies();
 
 const MyGames: React.FC = () => {
   const { setCurrentGameId, openStatus } = useGame();
@@ -26,6 +25,7 @@ const MyGames: React.FC = () => {
   const loadedRef = useRef(false);
 
   const fetchGames = useCallback(async () => {
+    const playerId = getUserIdFromCookies();
     if (!playerId) {
       return;
     }
