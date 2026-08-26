@@ -47,6 +47,23 @@ interface GameStatus {
   status_game: string;
 }
 
+// Cartas locales: Vite las importa estáticamente, las cachea con hash de
+// contenido y las sirve desde el mismo origen (sin dependencia de CDNs externos).
+import cardTwo from './assets/cards/two.png';
+import cardThree from './assets/cards/three.png';
+import cardFour from './assets/cards/four.png';
+import cardFive from './assets/cards/five.png';
+import cardSix from './assets/cards/six.png';
+import cardSeven from './assets/cards/seven.png';
+import cardEight from './assets/cards/eight.png';
+import cardNine from './assets/cards/nine.png';
+import cardTen from './assets/cards/ten.png';
+import cardJack from './assets/cards/jack.png';
+import cardQueen from './assets/cards/queen.png';
+import cardKing from './assets/cards/king.png';
+import cardAce from './assets/cards/ace.png';
+import cardHidden from './assets/cards/hidden.jpg';
+
 const cardImages: { [key: string]: string } = {
   '2': cardTwo,
   '3': cardThree,
