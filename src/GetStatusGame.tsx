@@ -410,12 +410,6 @@ const GameStatusButton: React.FC = () => {
                     <div className="arc-line arc-spaced">INSURANCE PAYS 2 TO 1</div>
                   </div>
 
-                  <div className="table-shoe" aria-hidden="true">
-                    <span className="shoe-card" />
-                    <span className="shoe-card" />
-                    <span className="shoe-card" />
-                  </div>
-
                   <div className="dealer-spot">
                     <div className="spot-name dealer-title">{gameStatus.croupier.name}</div>
                     <div className="cards-container">

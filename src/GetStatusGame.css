@@ -443,38 +443,6 @@
   margin-top: 4px;
 }
 
-.table-shoe {
-  position: absolute;
-  top: clamp(14px, 2vh, 20px);
-  right: clamp(16px, 2vw, 28px);
-  width: clamp(36px, 4vw, 52px);
-  height: clamp(52px, 5.6vw, 74px);
-}
-
-/* La X de cerrar vive en la esquina superior IZQUIERDA del modal: la derecha
-   la ocupa el zapato de cartas y quedaba tapada detrás. */
-.game-status-modal .close-button {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  right: auto;
-  float: none;
-  z-index: 20;
-}
-
-.shoe-card {
-  position: absolute;
-  inset: 0;
-  border-radius: 6px;
-  border: 2px solid #fff;
-  background: repeating-linear-gradient(45deg, #b3121f 0 6px, #8e0e18 6px 12px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
-}
-
-.shoe-card:nth-child(1) { transform: rotate(-7deg) translate(-5px, 3px); }
-.shoe-card:nth-child(2) { transform: rotate(-2deg) translate(2px, 0); }
-.shoe-card:nth-child(3) { transform: rotate(4deg) translate(8px, -2px); }
-
 .dealer-spot {
   position: absolute;
   top: clamp(64px, 10vh, 100px);
