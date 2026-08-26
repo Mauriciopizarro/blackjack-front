@@ -451,6 +451,17 @@
   height: clamp(52px, 5.6vw, 74px);
 }
 
+/* La X de cerrar vive en la esquina superior IZQUIERDA del modal: la derecha
+   la ocupa el zapato de cartas y quedaba tapada detrás. */
+.game-status-modal .close-button {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: auto;
+  float: none;
+  z-index: 20;
+}
+
 .shoe-card {
   position: absolute;
   inset: 0;
