@@ -1,31 +1,31 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { API_BASE_URL } from './config';
-import Modal from 'react-modal';
-import { toast } from 'sonner';
-import { getTokenFromCookies } from './utils/GetTokenFromCookies';
-import { getUserIdFromCookies } from './utils/GetUserIdFromCookies';
-import './GetStatusGame.css';
-import { createSocket } from './utils/socket';
-import { isSessionExpired, redirectToLogin } from './utils/session';
-import { useGame } from './GameContext';
+import React, { useCallback, useEffect, useState } from "react";
+import { API_BASE_URL } from "./config";
+import Modal from "react-modal";
+import { toast } from "sonner";
+import { getTokenFromCookies } from "./utils/GetTokenFromCookies";
+import { getUserIdFromCookies } from "./utils/GetUserIdFromCookies";
+import "./GetStatusGame.css";
+import { createSocket } from "./utils/socket";
+import { isSessionExpired, redirectToLogin } from "./utils/session";
+import { useGame } from "./GameContext";
 // Cartas locales: Vite las importa estáticamente, las cachea con hash de
 // contenido y las sirve desde el mismo origen (sin dependencia de CDNs externos).
-import cardTwo from './assets/cards/two.png';
-import cardThree from './assets/cards/three.png';
-import cardFour from './assets/cards/four.png';
-import cardFive from './assets/cards/five.png';
-import cardSix from './assets/cards/six.png';
-import cardSeven from './assets/cards/seven.png';
-import cardEight from './assets/cards/eight.png';
-import cardNine from './assets/cards/nine.png';
-import cardTen from './assets/cards/ten.png';
-import cardJack from './assets/cards/jack.png';
-import cardQueen from './assets/cards/queen.png';
-import cardKing from './assets/cards/king.png';
-import cardAce from './assets/cards/ace.png';
-import cardHidden from './assets/cards/hidden.jpg';
+import cardTwo from "./assets/cards/two.png";
+import cardThree from "./assets/cards/three.png";
+import cardFour from "./assets/cards/four.png";
+import cardFive from "./assets/cards/five.png";
+import cardSix from "./assets/cards/six.png";
+import cardSeven from "./assets/cards/seven.png";
+import cardEight from "./assets/cards/eight.png";
+import cardNine from "./assets/cards/nine.png";
+import cardTen from "./assets/cards/ten.png";
+import cardJack from "./assets/cards/jack.png";
+import cardQueen from "./assets/cards/queen.png";
+import cardKing from "./assets/cards/king.png";
+import cardAce from "./assets/cards/ace.png";
+import cardHidden from "./assets/cards/hidden.jpg";
 
-Modal.setAppElement('#root');
+Modal.setAppElement("#root");
 
 const socket = createSocket();
 
@@ -49,20 +49,20 @@ interface GameStatus {
 }
 
 const cardImages: { [key: string]: string } = {
-  '2': cardTwo,
-  '3': cardThree,
-  '4': cardFour,
-  '5': cardFive,
-  '6': cardSix,
-  '7': cardSeven,
-  '8': cardEight,
-  '9': cardNine,
-  '10': cardTen,
-  'J': cardJack,
-  'Q': cardQueen,
-  'K': cardKing,
-  'A': cardAce,
-  'hidden card': cardHidden,
+  "2": cardTwo,
+  "3": cardThree,
+  "4": cardFour,
+  "5": cardFive,
+  "6": cardSix,
+  "7": cardSeven,
+  "8": cardEight,
+  "9": cardNine,
+  "10": cardTen,
+  J: cardJack,
+  Q: cardQueen,
+  K: cardKing,
+  A: cardAce,
+  "hidden card": cardHidden,
 };
 
 // Denominaciones de casino, de mayor a menor para el desglose del saldo.
@@ -73,7 +73,7 @@ const CHIP_DENOMS = [1000, 500, 100, 25, 10, 5, 1];
 // total_points; este cálculo solo alimenta la animación mientras las cartas
 // van cayendo.
 const cardValue = (card: string): number => {
-  if (card === 'A') return 11;
+  if (card === "A") return 11;
   const n = Number(card);
   return Number.isNaN(n) ? 10 : n;
 };
@@ -84,7 +84,7 @@ const runningTotals = (cards: string[]): number[] => {
   let softAces = 0;
   const totals: number[] = [];
   for (const card of cards) {
-    if (card === 'A') {
+    if (card === "A") {
       softAces += 1;
       total += 11;
     } else {
@@ -112,7 +112,11 @@ interface PointsCounterProps {
  * Compartido por el contador de puntos y el status del jugador para que
  * ambos se revelen recién después de que sus cartas aparecieron.
  */
-const useRevealCount = (cardsLength: number, baseDelay: number, delayStep: number): number => {
+const useRevealCount = (
+  cardsLength: number,
+  baseDelay: number,
+  delayStep: number,
+): number => {
   const revealedRef = React.useRef(0);
   const [revealed, setRevealed] = useState(0);
 
@@ -133,11 +137,11 @@ const useRevealCount = (cardsLength: number, baseDelay: number, delayStep: numbe
           revealedRef.current = i + 1;
           setRevealed(i + 1);
         },
-        baseDelay + i * delayStep + 700
+        baseDelay + i * delayStep + 700,
       );
       timers.push(t);
     }
-    return () => timers.forEach(t => window.clearTimeout(t));
+    return () => timers.forEach((t) => window.clearTimeout(t));
   }, [cardsLength, baseDelay, delayStep]);
 
   return revealed;
@@ -166,41 +170,56 @@ const PointsCounter: React.FC<PointsCounterProps> = ({
   const revealed = useRevealCount(cards.length, baseDelay, delayStep);
 
   const finished = revealed >= cards.length;
-  return (
-    <>
-      {finished ? finalText : String(totals[revealed - 1] ?? 0)}
-    </>
-  );
+  return <>{finished ? finalText : String(totals[revealed - 1] ?? 0)}</>;
 };
 
 /**
- * Carta del croupier que se revela con animación de vuelta 3D:
- * muestra el dorso un instante y gira para descubrir la cara real.
+ * Slot de carta del croupier: el nodo se mantiene montado siempre para una
+ * posición dada, de modo que cuando la carta pasa de oculta (hidden card) a
+ * visible el giro 3D es continuo — no hay desaparición/reaparición.
+ *
+ * Reglas internas:
+ *  - Si la carta es `hidden card`  → muestra el dorso (face-down), sin flip.
+ *  - Si pasa de `hidden card` a una carta real → gira 180° para revelarla
+ *    (con un breve delay mostrando el dorso).
+ *  - Si la carta ya era visible y se mantiene igual → no anima.
  */
-const FlipCard: React.FC<{ front: string; style?: React.CSSProperties }> = ({
-  front,
-  style,
-}) => {
-  const [flipped, setFlipped] = useState(false);
+const CardSlot: React.FC<{
+  card: string;
+  style?: React.CSSProperties;
+}> = ({ card, style }) => {
+  const isHidden = card === "hidden card";
+  const [flipped, setFlipped] = useState(!isHidden);
+  const prevCardRef = React.useRef(card);
 
   useEffect(() => {
-    // Una pequeña pausa mostrando el dorso antes de girar.
-    const t = window.setTimeout(() => setFlipped(true), 350);
-    return () => window.clearTimeout(t);
-  }, []);
+    const prev = prevCardRef.current;
+    prevCardRef.current = card;
+
+    if (prev === "hidden card" && card !== "hidden card") {
+      // Revelación: dejo el dorso visible unos 250ms y luego giro.
+      const t = window.setTimeout(() => setFlipped(true), 250);
+      return () => window.clearTimeout(t);
+    }
+    // Sincronizo el estado con el nuevo valor (caso inicial / reset).
+    setFlipped(!isHidden);
+  }, [card, isHidden]);
+
+  const backSrc = cardImages["hidden card"];
+  const frontSrc = cardImages[card];
 
   return (
-    <div className="flip-card deal-anim" style={style}>
-      <div className={`flip-card-inner${flipped ? ' flipped' : ''}`}>
+    <div className={`flip-card${!isHidden ? " deal-anim" : ""}`} style={style}>
+      <div className={`flip-card-inner${flipped ? " flipped" : ""}`}>
         <img
           className="flip-face flip-face-back"
-          src={cardImages['hidden card']}
+          src={backSrc}
           alt="hidden card"
         />
         <img
           className="flip-face flip-face-front"
-          src={cardImages[front]}
-          alt={`${front} card`}
+          src={frontSrc}
+          alt={`${card} card`}
         />
       </div>
     </div>
@@ -240,7 +259,7 @@ const GameStatusButton: React.FC = () => {
       return null;
     }
     return {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     };
   };
@@ -248,7 +267,7 @@ const GameStatusButton: React.FC = () => {
   const fetchGameStatus = useCallback(async () => {
     const gameId = currentGameId;
     if (!gameId) {
-      toast.error('No game selected');
+      toast.error("No game selected");
       return null;
     }
 
@@ -259,7 +278,7 @@ const GameStatusButton: React.FC = () => {
 
     try {
       const response = await fetch(`${API_BASE_URL}/game/status/${gameId}`, {
-        method: 'GET',
+        method: "GET",
         headers,
       });
 
@@ -277,15 +296,14 @@ const GameStatusButton: React.FC = () => {
       // Anti-parpadeo: solo actualizamos el estado si los datos realmente
       // cambiaron. Si devolvemos la referencia anterior, React no re-renderiza
       // y el tablero queda estable entre polls.
-      setGameStatus(prev =>
+      setGameStatus((prev) =>
         prev && JSON.stringify(prev) === JSON.stringify(responseData)
           ? prev
-          : (responseData as GameStatus)
+          : (responseData as GameStatus),
       );
       return responseData as GameStatus;
-
     } catch (error) {
-      console.error('Error getting game status:', error);
+      console.error("Error getting game status:", error);
       return null;
     }
   }, [currentGameId]);
@@ -304,9 +322,13 @@ const GameStatusButton: React.FC = () => {
     setPendingChips([]);
     void fetchGameStatus();
 
-    const rejoinGame = () => socket.emit('joinGame', gameId);
+    const rejoinGame = () => socket.emit("joinGame", gameId);
 
-    const handleGameUpdated = ({ gameId: updatedGameId }: { gameId?: string }) => {
+    const handleGameUpdated = ({
+      gameId: updatedGameId,
+    }: {
+      gameId?: string;
+    }) => {
       if (updatedGameId === gameId) {
         void fetchGameStatus();
       }
@@ -315,9 +337,9 @@ const GameStatusButton: React.FC = () => {
     // Entramos a la sala del juego. Socket.IO pierde la membresía de las salas
     // cuando el cliente se reconecta (servidor reiniciado / red cortada / tab
     // dormida), así que nos volvemos a unir en cada evento `connect`.
-    socket.emit('joinGame', gameId);
-    socket.on('connect', rejoinGame);
-    socket.on('gameUpdated', handleGameUpdated);
+    socket.emit("joinGame", gameId);
+    socket.on("connect", rejoinGame);
+    socket.on("gameUpdated", handleGameUpdated);
 
     // Refresco periódico de respaldo: garantiza que el tablero se actualice
     // en vivo aunque el evento socket se pierda por completo.
@@ -326,9 +348,9 @@ const GameStatusButton: React.FC = () => {
     }, 3000);
 
     return () => {
-      socket.off('connect', rejoinGame);
-      socket.emit('leaveGame', gameId);
-      socket.off('gameUpdated', handleGameUpdated);
+      socket.off("connect", rejoinGame);
+      socket.emit("leaveGame", gameId);
+      socket.off("gameUpdated", handleGameUpdated);
       window.clearInterval(statusInterval);
     };
   }, [fetchGameStatus, statusOpen, currentGameId]);
@@ -348,7 +370,10 @@ const GameStatusButton: React.FC = () => {
     let cancelled = false;
     void (async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/wallet/get/${playerIdFresh}`, { headers });
+        const response = await fetch(
+          `${API_BASE_URL}/wallet/get/${playerIdFresh}`,
+          { headers },
+        );
         if (!response.ok || isSessionExpired(response.status)) {
           if (isSessionExpired(response.status)) {
             redirectToLogin();
@@ -360,7 +385,7 @@ const GameStatusButton: React.FC = () => {
           setWalletAmount(Math.max(0, Math.floor(Number(data.amount ?? 0))));
         }
       } catch (error) {
-        console.error('Error fetching wallet for chips:', error);
+        console.error("Error fetching wallet for chips:", error);
       }
     })();
     return () => {
@@ -369,17 +394,17 @@ const GameStatusButton: React.FC = () => {
   }, [statusOpen, currentGameId]);
 
   const notifyGameUpdated = (gameId: string, statusGame?: string) => {
-    socket.emit('gameUpdated', { gameId });
+    socket.emit("gameUpdated", { gameId });
 
-    if (statusGame === 'finished') {
-      socket.emit('newGame');
+    if (statusGame === "finished") {
+      socket.emit("newGame");
     }
   };
 
   const handleDealCard = async () => {
     const gameId = currentGameId;
     if (!gameId) {
-      toast.error('No game selected');
+      toast.error("No game selected");
       return;
     }
 
@@ -390,7 +415,7 @@ const GameStatusButton: React.FC = () => {
 
     try {
       const response = await fetch(`${API_BASE_URL}/game/deal_card/${gameId}`, {
-        method: 'POST',
+        method: "POST",
         headers,
       });
 
@@ -409,14 +434,14 @@ const GameStatusButton: React.FC = () => {
         notifyGameUpdated(gameId, updatedData.status_game);
       }
     } catch (error) {
-      console.error('Error dealing card:', error);
+      console.error("Error dealing card:", error);
     }
   };
 
   const handleStand = async () => {
     const gameId = currentGameId;
     if (!gameId) {
-      toast.error('No game selected');
+      toast.error("No game selected");
       return;
     }
 
@@ -427,7 +452,7 @@ const GameStatusButton: React.FC = () => {
 
     try {
       const response = await fetch(`${API_BASE_URL}/game/stand/${gameId}`, {
-        method: 'POST',
+        method: "POST",
         headers,
       });
 
@@ -446,24 +471,24 @@ const GameStatusButton: React.FC = () => {
         notifyGameUpdated(gameId, updatedData.status_game);
       }
     } catch (error) {
-      console.error('Error standing player:', error);
+      console.error("Error standing player:", error);
     }
   };
 
   const handleBetSubmit = async () => {
     const gameId = currentGameId;
     if (!gameId) {
-      toast.error('No game selected');
+      toast.error("No game selected");
       return;
     }
 
     const numericBet = pendingBetAmount;
     if (!numericBet || numericBet < 1) {
-      toast.error('Enter a valid bet amount');
+      toast.error("Enter a valid bet amount");
       return;
     }
     if (walletAmount !== null && numericBet > walletAmount) {
-      toast.error('Insufficient balance for this bet');
+      toast.error("Insufficient balance for this bet");
       return;
     }
 
@@ -474,7 +499,7 @@ const GameStatusButton: React.FC = () => {
 
     try {
       const response = await fetch(`${API_BASE_URL}/game/make_bet/${gameId}`, {
-        method: 'POST',
+        method: "POST",
         headers,
         body: JSON.stringify({ bet_amount: numericBet, player_id: playerId }),
       });
@@ -489,7 +514,7 @@ const GameStatusButton: React.FC = () => {
         return;
       }
 
-      toast.success('Bet placed successfully!');
+      toast.success("Bet placed successfully!");
       setPendingChips([]);
 
       const updatedData = await fetchGameStatus();
@@ -497,7 +522,7 @@ const GameStatusButton: React.FC = () => {
         notifyGameUpdated(gameId, updatedData.status_game);
       }
     } catch (error) {
-      console.error('Error placing bet:', error);
+      console.error("Error placing bet:", error);
     }
   };
 
@@ -507,17 +532,17 @@ const GameStatusButton: React.FC = () => {
       baseDelay?: number;
       delayStep?: number;
       dealVars?: React.CSSProperties;
-      flip?: { idx: number };
-    }
+      flipSlot?: boolean;
+    },
   ) => {
     const baseDelay = opts?.baseDelay ?? 0;
     const delayStep = opts?.delayStep ?? 350;
     return cards.map((card, index) => {
-      if (opts?.flip && opts.flip.idx === index) {
+      if (opts?.flipSlot) {
         return (
-          <FlipCard
-            key={`flip-${index}`}
-            front={card}
+          <CardSlot
+            key={index}
+            card={card}
             style={{
               animationDelay: `${baseDelay + index * delayStep}ms`,
               ...(opts.dealVars ?? {}),
@@ -540,59 +565,21 @@ const GameStatusButton: React.FC = () => {
     });
   };
 
-  const currentPlayer = gameStatus?.players.find(p => p.id === playerId);
+  const currentPlayer = gameStatus?.players.find((p) => p.id === playerId);
 
   const pendingBetAmount = pendingChips.reduce((acc, chip) => acc + chip, 0);
 
   const addChip = (denom: number) => {
-    setPendingChips(prev => [...prev, denom]);
+    setPendingChips((prev) => [...prev, denom]);
   };
 
   const undoChip = () => {
-    setPendingChips(prev => prev.slice(0, -1));
+    setPendingChips((prev) => prev.slice(0, -1));
   };
 
   const clearChips = () => {
     setPendingChips([]);
   };
-
-  // Detección del "flip": cuando una carta OCULTA del croupier pasa a ser
-  // visible (el croupier juega su turno), animamos la vuelta 3D.
-  const croupierCardsRef = React.useRef<string[]>([]);
-  const [croupierFlip, setCroupierFlip] = useState<{
-    idx: number;
-    card: string;
-    nonce: number;
-  } | null>(null);
-
-  useEffect(() => {
-    if (!gameStatus) {
-      return;
-    }
-    const current = gameStatus.croupier.cards;
-    const previous = croupierCardsRef.current;
-
-    let revealIdx = -1;
-    for (let i = 0; i < current.length; i++) {
-      if (previous[i] === 'hidden card' && current[i] !== 'hidden card') {
-        revealIdx = i;
-      }
-    }
-
-    if (revealIdx >= 0) {
-      setCroupierFlip({ idx: revealIdx, card: current[revealIdx], nonce: Date.now() });
-    } else {
-      const changed =
-        previous.length !== current.length ||
-        previous.some((card, i) => card !== current[i]);
-      if (changed && croupierFlip !== null) {
-        setCroupierFlip(null);
-      }
-    }
-
-    croupierCardsRef.current = current;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameStatus]);
 
   // Modelo de casino dinámico: de lo que te queda sin apostar podés sacar
   // hasta floor(restante / denominación) fichas de cada tipo. Cada ficha
@@ -610,137 +597,172 @@ const GameStatusButton: React.FC = () => {
           className="game-status-modal"
           overlayClassName="game-status-overlay"
         >
-          <button className="close-button" onClick={closeStatus}>&times;</button>
+          <button className="close-button" onClick={closeStatus}>
+            &times;
+          </button>
           {gameStatus ? (
             <>
-              {gameStatus.status_game === 'pending_bet' ? (
+              {gameStatus.status_game === "pending_bet" ? (
                 <div className="table-felt table-felt-bet">
                   <div className="bet-phase">
-                  <h3 className="bet-phase-title">Place your bets to start the round</h3>
-                  <p className="bet-phase-subtitle">
-                    The cards are dealt automatically once every player has placed a bet.
-                  </p>
+                    <h3 className="bet-phase-title">
+                      Place your bets to start the round
+                    </h3>
+                    <p className="bet-phase-subtitle">
+                      The cards are dealt automatically once every player has
+                      placed a bet.
+                    </p>
 
-                  <div className="bet-phase-players">
-                    {gameStatus.players.map(player => (
-                      <div key={player.id} className="bet-phase-player">
-                        <span className="bet-phase-player-name">
-                          {player.name}{player.id === playerId ? ' (you)' : ''}
-                        </span>
-                        {player.bet_amount > 0 ? (
-                          <span className="bet-phase-player-bet placed">&#10003; Bet: ${player.bet_amount}</span>
-                        ) : (
-                          <span className="bet-phase-player-bet pending">No bet yet</span>
-                        )}
+                    <div className="bet-phase-players">
+                      {gameStatus.players.map((player) => (
+                        <div key={player.id} className="bet-phase-player">
+                          <span className="bet-phase-player-name">
+                            {player.name}
+                            {player.id === playerId ? " (you)" : ""}
+                          </span>
+                          {player.bet_amount > 0 ? (
+                            <span className="bet-phase-player-bet placed">
+                              &#10003; Bet: ${player.bet_amount}
+                            </span>
+                          ) : (
+                            <span className="bet-phase-player-bet pending">
+                              No bet yet
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {currentPlayer && currentPlayer.bet_amount > 0 ? (
+                      <div className="bet-waiting">
+                        &#9203; You already placed ${currentPlayer.bet_amount}.
+                        Waiting for the other players...
                       </div>
-                    ))}
+                    ) : (
+                      <div className="chips-bet">
+                        <p className="chips-total">
+                          Balance:{" "}
+                          <span className="chips-total-balance">
+                            ${walletAmount ?? "…"}
+                          </span>{" "}
+                          · Your bet:{" "}
+                          <span className="chips-total-amount">
+                            ${pendingBetAmount}
+                          </span>
+                        </p>
+
+                        <div className="chip-rack">
+                          {[...CHIP_DENOMS].reverse().map((denom) => {
+                            const available = availableFor(denom);
+                            return (
+                              <button
+                                key={denom}
+                                type="button"
+                                className="chip"
+                                data-denom={denom}
+                                onClick={() => addChip(denom)}
+                                disabled={available <= 0}
+                                title={`${available.toLocaleString("en-US")} x $${denom} left`}
+                              >
+                                <span className="chip-inner">{denom}</span>
+                                <span className="chip-count">
+                                  {available > 999
+                                    ? "999+"
+                                    : available.toLocaleString("en-US")}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        <div className="chips-stack">
+                          {[...CHIP_DENOMS].reverse().map((denom) => {
+                            const count = pendingChips.filter(
+                              (c) => c === denom,
+                            ).length;
+                            if (count === 0) {
+                              return null;
+                            }
+                            return (
+                              <div
+                                key={denom}
+                                className="chips-pile"
+                                data-denom={denom}
+                                title={`${count} x $${denom}`}
+                              >
+                                <span className="chips-pile-chip" />
+                                <span className="chips-pile-count">
+                                  {count > 99 ? "99+" : count}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        <div className="chips-actions">
+                          <button
+                            type="button"
+                            className="chip-undo"
+                            onClick={undoChip}
+                            disabled={pendingChips.length === 0}
+                          >
+                            Undo
+                          </button>
+                          <button
+                            type="button"
+                            className="chip-clear"
+                            onClick={clearChips}
+                            disabled={pendingChips.length === 0}
+                          >
+                            Clear
+                          </button>
+                          <button
+                            type="button"
+                            className="submit-bet-button chips-submit"
+                            onClick={handleBetSubmit}
+                            disabled={pendingBetAmount < 1}
+                          >
+                            Confirm Bet (
+                            {pendingBetAmount ? `$${pendingBetAmount}` : "$0"})
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
-
-                  {currentPlayer && currentPlayer.bet_amount > 0 ? (
-                    <div className="bet-waiting">
-                      &#9203; You already placed ${currentPlayer.bet_amount}. Waiting for the other players...
-                    </div>
-                  ) : (
-                    <div className="chips-bet">
-                      <p className="chips-total">
-                        Balance: <span className="chips-total-balance">${walletAmount ?? '…'}</span>
-                        {' '}· Your bet: <span className="chips-total-amount">${pendingBetAmount}</span>
-                      </p>
-
-                      <div className="chip-rack">
-                        {[...CHIP_DENOMS].reverse().map(denom => {
-                          const available = availableFor(denom);
-                          return (
-                            <button
-                              key={denom}
-                              type="button"
-                              className="chip"
-                              data-denom={denom}
-                              onClick={() => addChip(denom)}
-                              disabled={available <= 0}
-                              title={`${available.toLocaleString('en-US')} x $${denom} left`}
-                            >
-                              <span className="chip-inner">{denom}</span>
-                              <span className="chip-count">
-                                {available > 999 ? '999+' : available.toLocaleString('en-US')}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      <div className="chips-stack">
-                        {[...CHIP_DENOMS].reverse().map(denom => {
-                          const count = pendingChips.filter(c => c === denom).length;
-                          if (count === 0) {
-                            return null;
-                          }
-                          return (
-                            <div
-                              key={denom}
-                              className="chips-pile"
-                              data-denom={denom}
-                              title={`${count} x $${denom}`}
-                            >
-                              <span className="chips-pile-chip" />
-                              <span className="chips-pile-count">{count > 99 ? '99+' : count}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      <div className="chips-actions">
-                        <button
-                          type="button"
-                          className="chip-undo"
-                          onClick={undoChip}
-                          disabled={pendingChips.length === 0}
-                        >
-                          Undo
-                        </button>
-                        <button
-                          type="button"
-                          className="chip-clear"
-                          onClick={clearChips}
-                          disabled={pendingChips.length === 0}
-                        >
-                          Clear
-                        </button>
-                        <button
-                          type="button"
-                          className="submit-bet-button chips-submit"
-                          onClick={handleBetSubmit}
-                          disabled={pendingBetAmount < 1}
-                        >
-                          Confirm Bet ({pendingBetAmount ? `$${pendingBetAmount}` : '$0'})
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
                 </div>
               ) : (
                 <div className="table-felt">
                   <div className="table-branding" aria-hidden="true">
-                    <div className="arc-line arc-big">BLACKJACK PAYS 3 TO 2</div>
-                    <div className="arc-line arc-small">DEALER MUST STAND ON 17 AND DRAW TO 16</div>
-                    <div className="arc-line arc-spaced">INSURANCE PAYS 2 TO 1</div>
+                    <div className="arc-line arc-big">
+                      BLACKJACK PAYS 3 TO 2
+                    </div>
+                    <div className="arc-line arc-small">
+                      DEALER MUST STAND ON 17 AND DRAW TO 16
+                    </div>
+                    <div className="arc-line arc-spaced">
+                      INSURANCE PAYS 2 TO 1
+                    </div>
                   </div>
 
                   <div className="dealer-spot">
-                    <div className="spot-name dealer-title">{gameStatus.croupier.name}</div>
+                    <div className="spot-name dealer-title">
+                      {gameStatus.croupier.name}
+                    </div>
                     <div className="cards-container">
                       {renderCards(gameStatus.croupier.cards, {
                         baseDelay: gameStatus.players.length * 700,
-                        dealVars: { '--deal-dx': '-150px', '--deal-dy': '0px' } as React.CSSProperties,
-                        flip: croupierFlip ? { idx: croupierFlip.idx } : undefined,
+                        dealVars: {
+                          "--deal-dx": "-150px",
+                          "--deal-dy": "0px",
+                        } as React.CSSProperties,
+                        flipSlot: true,
                       })}
                     </div>
                     <div className="spot-points">
-                      Points:{' '}
+                      Points:{" "}
                       <PointsCounter
                         cards={gameStatus.croupier.cards}
-                        finalText={gameStatus.croupier.total_points.join(', ')}
+                        finalText={gameStatus.croupier.total_points.join(", ")}
                         baseDelay={gameStatus.players.length * 700}
                       />
                     </div>
@@ -757,7 +779,7 @@ const GameStatusButton: React.FC = () => {
                           style={{
                             left: `${50 + 41 * Math.cos(angle)}%`,
                             bottom: `${40 + 17 * Math.sin(angle)}%`,
-                            transform: 'translateX(-50%)',
+                            transform: "translateX(-50%)",
                           }}
                         />
                       );
@@ -765,63 +787,69 @@ const GameStatusButton: React.FC = () => {
                   </div>
 
                   {gameStatus.players.map((player, pIndex) => {
-                    const t = gameStatus.players.length === 1
-                      ? 0.5
-                      : pIndex / (gameStatus.players.length - 1);
+                    const t =
+                      gameStatus.players.length === 1
+                        ? 0.5
+                        : pIndex / (gameStatus.players.length - 1);
                     const angle = Math.PI * t;
                     const spotStyle: React.CSSProperties = {
                       left: `${50 + 41 * Math.cos(angle)}%`,
                       bottom: `${9 + 18 * Math.sin(angle)}%`,
-                      transform: 'translateX(-50%)',
+                      transform: "translateX(-50%)",
                     };
                     return (
                       <div
                         key={player.id}
-                        className={`player-spot${player.id === playerId ? ' current' : ''}`}
+                        className={`player-spot${player.id === playerId ? " current" : ""}`}
                         style={spotStyle}
                       >
                         <div className="spot-name">
-                          {player.name}{player.id === playerId ? ' (you)' : ''}
+                          {player.name}
+                          {player.id === playerId ? " (you)" : ""}
                         </div>
                         <div className="cards-container">
                           {renderCards(player.cards, {
                             baseDelay: pIndex * 700,
-                            dealVars: { '--deal-dx': '0px', '--deal-dy': '-300px' } as React.CSSProperties,
+                            dealVars: {
+                              "--deal-dx": "0px",
+                              "--deal-dy": "-300px",
+                            } as React.CSSProperties,
                           })}
                         </div>
                         <div className="spot-points">
-                          Points:{' '}
+                          Points:{" "}
                           <PointsCounter
                             cards={player.cards}
-                            finalText={player.total_points.join(', ')}
+                            finalText={player.total_points.join(", ")}
                             baseDelay={pIndex * 700}
-                          />
-                          {' '}&middot; Bet: <span>${player.bet_amount}</span>
-                          {' '}&middot;{' '}
+                          />{" "}
+                          &middot; Bet: <span>${player.bet_amount}</span>{" "}
+                          &middot;{" "}
                           <DelayedStatus
                             cards={player.cards}
                             status={player.status}
                             baseDelay={pIndex * 700}
                           />
                         </div>
-                        {player.id === playerId && gameStatus.status_game === 'started' && (
-                          <div className="player-buttons">
-                            <button
-                              className="deal-card-button"
-                              onClick={handleDealCard}
-                              disabled={player.status !== 'playing'}
-                            >
-                              Deal Card
-                            </button>
-                            <button
-                              className="stand-button"
-                              onClick={handleStand}
-                              disabled={player.status !== 'playing'}
-                            >
-                              Stand
-                            </button>
-                          </div>
-                        )}
+                        {player.id === playerId &&
+                          gameStatus.status_game === "started" && (
+                            <div className="player-buttons">
+                              <button
+                                className="deal-card-button"
+                                onClick={handleDealCard}
+                                disabled={player.status !== "playing"}
+                              >
+                                Deal Card
+                              </button>
+                              <button
+                                className="stand-button"
+                                onClick={handleStand}
+                                disabled={player.status !== "playing"}
+                              >
+                                Stand
+                              </button>
+                            </div>
+                          )}
                       </div>
                     );
                   })}

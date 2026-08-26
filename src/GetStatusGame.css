@@ -584,7 +584,7 @@
   align-items: center;
   flex-wrap: wrap;
   justify-content: center;
-  max-width: clamp(160px, 20vw, 280px);
+  max-width: clamp(220px, 30vw, 440px);
 }
 
 .table-card {
