@@ -361,31 +361,56 @@
 
 .chips-stack {
   display: flex;
-  flex-direction: row-reverse;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: flex-end;
   justify-content: center;
-  min-height: 34px;
-  gap: -2px;
+  min-height: 56px;
+  gap: 10px;
 }
 
-.chip-stacked {
-  width: 40px;
-  height: 40px;
+/* Pila por denominación: una sola ficha visual (con grosor simulado) + badge
+   con la cantidad, sin importar cuántas fichas de ese valor se hayan puesto. */
+.chips-pile {
+  position: relative;
+  width: 44px;
+  height: 46px;
+}
+
+.chips-pile[data-denom="1"]    { --chip-color: #b8b8b8; }
+.chips-pile[data-denom="5"]    { --chip-color: #c5352b; }
+.chips-pile[data-denom="10"]   { --chip-color: #4a90d9; }
+.chips-pile[data-denom="25"]   { --chip-color: #1f9a52; }
+.chips-pile[data-denom="50"]   { --chip-color: #e67e22; }
+.chips-pile[data-denom="100"]  { --chip-color: #2b2b2b; }
+.chips-pile[data-denom="500"]  { --chip-color: #7d3c98; }
+.chips-pile[data-denom="1000"] { --chip-color: #d4a017; }
+
+.chips-pile-chip {
+  position: absolute;
+  inset: 0 0 6px 0;
   border-radius: 50%;
   border: 3px dashed #1c1c1c;
-  display: inline-block;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-  margin-left: -12px;
+  background:
+    radial-gradient(circle, #fff 0 30%, var(--chip-color) 30% 100%);
+  box-shadow:
+    0 2px 0 -1px var(--chip-color),
+    0 4px 0 -1px color-mix(in srgb, var(--chip-color) 70%, #000),
+    0 6px 0 -1px color-mix(in srgb, var(--chip-color) 45%, #000),
+    0 7px 8px rgba(0, 0, 0, 0.5);
 }
 
-.chip-stacked-denom-1    { background: radial-gradient(circle, #fff 0 30%, #b8b8b8 30% 100%); }
-.chip-stacked-denom-5    { background: radial-gradient(circle, #fff 0 30%, #c5352b 30% 100%); }
-.chip-stacked-denom-10   { background: radial-gradient(circle, #fff 0 30%, #4a90d9 30% 100%); }
-.chip-stacked-denom-25   { background: radial-gradient(circle, #fff 0 30%, #1f9a52 30% 100%); }
-.chip-stacked-denom-50   { background: radial-gradient(circle, #fff 0 30%, #e67e22 30% 100%); }
-.chip-stacked-denom-100  { background: radial-gradient(circle, #fff 0 30%, #2b2b2b 30% 100%); }
-.chip-stacked-denom-500  { background: radial-gradient(circle, #fff 0 30%, #7d3c98 30% 100%); }
-.chip-stacked-denom-1000 { background: radial-gradient(circle, #fff 0 30%, #d4a017 30% 100%); }
+.chips-pile-count {
+  position: absolute;
+  top: -8px;
+  right: -10px;
+  background: #ffcc00;
+  color: #1c1c1c;
+  font-size: 11px;
+  font-weight: bold;
+  border-radius: 10px;
+  padding: 1px 6px;
+  border: 2px solid #1c1c1c;
+}
 
 .chips-actions {
   display: flex;

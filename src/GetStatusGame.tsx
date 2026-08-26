@@ -579,12 +579,23 @@ const GameStatusButton: React.FC = () => {
                       </div>
 
                       <div className="chips-stack">
-                        {pendingChips.map((chip, idx) => (
-                          <span
-                            key={idx}
-                            className={`chip-stacked chip-stacked-denom-${chip}`}
-                          />
-                        ))}
+                        {[...CHIP_DENOMS].reverse().map(denom => {
+                          const count = pendingChips.filter(c => c === denom).length;
+                          if (count === 0) {
+                            return null;
+                          }
+                          return (
+                            <div
+                              key={denom}
+                              className="chips-pile"
+                              data-denom={denom}
+                              title={`${count} x $${denom}`}
+                            >
+                              <span className="chips-pile-chip" />
+                              <span className="chips-pile-count">{count > 99 ? '99+' : count}</span>
+                            </div>
+                          );
+                        })}
                       </div>
 
                       <div className="chips-actions">
