@@ -1,4 +1,4 @@
-import { toast } from 'sonner';
+import './session.css';
 
 /**
  * Manejo centralizado de sesión expirada.
@@ -23,10 +23,51 @@ export const clearSessionCookies = () => {
   expireCookie('userId');
 };
 
-/** Limpia la sesión y manda al login; no hay vuelta hasta re-loguearse. */
-export const redirectToLogin = (reason?: string) => {
+let sessionExpiredModalShown = false;
+
+/**
+ * Limpia la sesión y muestra un modal bloqueante "Session Expired" con un
+ * botón "Login". El usuario NO puede seguir usando la app: el overlay cubre
+ * toda la pantalla y la única salida es volver a loguearse (recarga completa).
+ * Es idempotente: llamarlo N veces muestra un único modal.
+ */
+export const redirectToLogin = (_reason?: string) => {
   clearSessionCookies();
-  toast.error(reason ?? 'Your session expired. Please log in again.');
-  // location.href recarga la app completa: ningún estado queda vivo.
-  window.location.href = '/login';
+
+  if (sessionExpiredModalShown) {
+    return;
+  }
+  sessionExpiredModalShown = true;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'session-expired-overlay';
+
+  const card = document.createElement('div');
+  card.className = 'session-expired-card';
+
+  const icon = document.createElement('div');
+  icon.className = 'session-expired-icon';
+  icon.textContent = '🔒';
+
+  const title = document.createElement('h2');
+  title.className = 'session-expired-title';
+  title.textContent = 'Session Expired';
+
+  const message = document.createElement('p');
+  message.className = 'session-expired-message';
+  message.textContent = 'Your session has expired. Please log in again to keep playing.';
+
+  const button = document.createElement('button');
+  button.className = 'session-expired-login-button';
+  button.textContent = 'Login';
+  button.addEventListener('click', () => {
+    window.location.href = '/login';
+  });
+
+  card.appendChild(icon);
+  card.appendChild(title);
+  card.appendChild(message);
+  card.appendChild(button);
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
 };
