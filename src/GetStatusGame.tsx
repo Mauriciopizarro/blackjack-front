@@ -209,7 +209,7 @@ const CardSlot: React.FC<{
   const frontSrc = cardImages[card];
 
   return (
-    <div className={`flip-card${!isHidden ? " deal-anim" : ""}`} style={style}>
+    <div className="flip-card deal-anim" style={style}>
       <div className={`flip-card-inner${flipped ? " flipped" : ""}`}>
         <img
           className="flip-face flip-face-back"
