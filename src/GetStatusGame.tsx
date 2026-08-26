@@ -129,13 +129,14 @@ const PointsCounter: React.FC<PointsCounterProps> = ({
     const from = Math.min(revealedRef.current, cards.length);
     const timers: number[] = [];
     for (let i = from; i < cards.length; i++) {
-      // El punto sube cuando la carta termina su vuelo (~400ms de los 550ms).
+      // El número aparece recién DESPUÉS de que la carta aterrizó por completo
+      // (vuelo de 550ms + margen), para no hacer spoiler del puntaje.
       const t = window.setTimeout(
         () => {
           revealedRef.current = i + 1;
           setRevealed(i + 1);
         },
-        baseDelay + i * delayStep + 400
+        baseDelay + i * delayStep + 700
       );
       timers.push(t);
     }
