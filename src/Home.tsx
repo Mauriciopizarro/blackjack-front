@@ -9,6 +9,7 @@ import MyGames from './MyGames';
 import { GameProvider } from './GameContext';
 import { getTokenFromCookies } from './utils/GetTokenFromCookies';
 import { redirectToLogin } from './utils/session';
+import LogoutButton from './LogoutButton';
 
 
 const Home: React.FC = () => {
@@ -29,6 +30,7 @@ const Home: React.FC = () => {
   return (
     <div className='home'>
       <GameProvider>
+        <LogoutButton />
         <GameStatusButton />
         <div className='topbar'>
           {<CreateGame/>}
