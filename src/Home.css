@@ -30,22 +30,178 @@
     margin: 0 5px; /* Ajusta el espacio entre los botones */
 }
 
-/* ===== Responsive móvil ===== */
+/* ===== Hamburger + Mobile Menu (hidden on desktop) ===== */
+.hamburger-button {
+    display: none;
+}
+
+.mobile-menu {
+    display: none;
+}
+
+/* ===== Mobile: collapse buttons into a hamburger sandwich ===== */
 @media (max-width: 768px) {
     .home {
         font-size: 22px;
     }
 
-    .topbar {
-        gap: 10px;
-        top: 12px;
-        flex-wrap: wrap;
-        justify-content: center;
-        width: calc(100% - 16px);
+    /* Hide desktop layout elements */
+    .topbar,
+    .buttons {
+        display: none !important;
     }
 
-    .buttons {
-        flex-wrap: wrap;
+    /* Hide player history panel on mobile (accessible via My Games) */
+    .player-history {
+        display: none !important;
+    }
+
+    /* Hamburger button — fixed at top-center */
+    .hamburger-button {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+        align-items: center;
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 100;
+        width: 56px;
+        height: 56px;
+        background-color: #e6b800;
+        color: #1c1c1c;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        padding: 8px 12px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    }
+
+    .hamburger-button:hover {
+        background-color: #fff;
+        transform: translateX(-50%) scale(1.05);
+    }
+
+    .hamburger-button:focus-visible {
+        outline: 2px solid #fff;
+        outline-offset: 2px;
+    }
+
+    /* Hamburger bars */
+    .hamburger-bar {
+        display: block;
+        width: 28px;
+        height: 3px;
+        background-color: #1c1c1c;
+        border-radius: 3px;
+        transition: all 0.3s ease;
+    }
+
+    /* Animate bars into an X when open */
+    .hamburger-button.open .hamburger-bar:nth-child(1) {
+        transform: rotate(45deg) translate(5px, 5px);
+    }
+    .hamburger-button.open .hamburger-bar:nth-child(2) {
+        opacity: 0;
+    }
+    .hamburger-button.open .hamburger-bar:nth-child(3) {
+        transform: rotate(-45deg) translate(5px, -5px);
+    }
+
+    /* Mobile menu dropdown */
+    .mobile-menu.open {
+        display: block;
+        position: fixed;
+        top: 88px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 99;
+        background-color: #1c1c1c;
+        border-radius: 12px;
+        padding: 12px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+        min-width: 220px;
+        max-width: calc(100vw - 32px);
+    }
+
+    .mobile-menu-content {
+        display: flex;
+        flex-direction: column;
         gap: 8px;
+    }
+
+    /* === Overrides for components inside the mobile menu === */
+
+    /* WalletButton: override position:fixed → static flow */
+    .mobile-menu .wallet-button {
+        position: static !important;
+        top: auto !important;
+        right: auto !important;
+        width: 100% !important;
+        min-width: unset !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 12px 20px !important;
+        font-size: 20px !important;
+        border-radius: 8px !important;
+        justify-content: flex-start !important;
+        gap: 10px !important;
+    }
+
+    .mobile-menu .wallet-button svg {
+        margin-right: 10px !important;
+    }
+
+    /* LogoutButton: override position:fixed → static flow */
+    .mobile-menu .logout-button {
+        position: static !important;
+        top: auto !important;
+        right: auto !important;
+        left: auto !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: unset !important;
+        min-width: unset !important;
+        padding: 12px 20px !important;
+        font-size: 20px !important;
+        border-radius: 8px !important;
+        justify-content: flex-start !important;
+        gap: 10px !important;
+    }
+
+    .mobile-menu .logout-button svg {
+        margin-right: 10px !important;
+    }
+
+    /* CreateGame button — full width */
+    .mobile-menu .createButton {
+        width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 12px 20px !important;
+        font-size: 20px !important;
+    }
+
+    /* JoinGame button — full width */
+    .mobile-menu .join-game-button {
+        width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 12px 20px !important;
+        font-size: 20px !important;
+    }
+
+    /* MyGames button — full width */
+    .mobile-menu .my-games-button {
+        width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 12px 20px !important;
+        font-size: 20px !important;
+    }
+
+    /* CreateGame error container — full width */
+    .mobile-menu .create-game-container .error-message-container {
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
 }
