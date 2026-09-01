@@ -185,3 +185,28 @@
   background-color: #0f0f0f;
   color: white;
 }
+
+/* ===== Responsive móvil ===== */
+@media (max-width: 768px) {
+  .modalJoin,
+  .lobby-modal {
+    max-width: 100%;
+    width: calc(100% - 24px);
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    padding: 18px 16px;
+    box-sizing: border-box;
+  }
+
+  .modal-overlay {
+    padding: 12px;
+    box-sizing: border-box;
+  }
+
+  .join-game-button,
+  .join-game-confirm-button {
+    width: 100%;
+    min-height: 46px;
+    font-size: 16px;
+  }
+}
