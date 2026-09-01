@@ -29,3 +29,23 @@
 .buttons > * {
     margin: 0 5px; /* Ajusta el espacio entre los botones */
 }
+
+/* ===== Responsive móvil ===== */
+@media (max-width: 768px) {
+    .home {
+        font-size: 22px;
+    }
+
+    .topbar {
+        gap: 10px;
+        top: 12px;
+        flex-wrap: wrap;
+        justify-content: center;
+        width: calc(100% - 16px);
+    }
+
+    .buttons {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+}

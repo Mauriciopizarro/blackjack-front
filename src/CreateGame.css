@@ -88,4 +88,28 @@
     justify-content: space-between;
     align-items: center;
   }
+
+  /* ===== Responsive móvil ===== */
+  @media (max-width: 768px) {
+    .game-info-modal {
+      max-width: 100%;
+      width: calc(100% - 24px);
+      max-height: calc(100dvh - 24px);
+      overflow-y: auto;
+      padding: 18px 16px;
+      box-sizing: border-box;
+    }
+
+    .modal-overlay {
+      padding: 12px;
+      box-sizing: border-box;
+    }
+
+    .createButton {
+      width: 100%;
+      min-height: 46px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+  }
   
