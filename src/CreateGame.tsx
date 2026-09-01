@@ -57,6 +57,9 @@ const CreateGame: React.FC = () => {
                 if (response.ok) {
                     setCurrentGameId(responseData.id);
                     setGameInfo(responseData);
+                    // Avisamos al resto de los clientes para que su lista
+                    // "My Games" se refresque por socket (sin polling).
+                    socketRef.current?.emit('newGame');
                 } else if (responseData.detail?.includes("is already created, please start them")) {
                     const gameIdMatch = responseData.detail.match(/Game id ([a-f0-9-]+) is already created/);
                     if (gameIdMatch) {

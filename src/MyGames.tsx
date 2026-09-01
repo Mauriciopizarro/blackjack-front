@@ -77,12 +77,22 @@ const MyGames: React.FC = () => {
     socket.on('newGame', handleUpdate);
     socket.on('gameUpdated', handleUpdate);
 
-    const interval = window.setInterval(() => void fetchGames(), 4000);
+    // Sin polling: la lista se refresca por socket (`newGame` al crearse una
+    // partida / `gameUpdated` al unirse alguien) y al volver a la pestaña.
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        void fetchGames();
+      }
+    };
+    const handleFocus = () => void fetchGames();
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', handleFocus);
 
     return () => {
       socket.off('newGame', handleUpdate);
       socket.off('gameUpdated', handleUpdate);
-      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleFocus);
     };
   }, [open, fetchGames]);
 
