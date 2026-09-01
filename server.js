@@ -8,6 +8,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const distPath = path.join(__dirname, 'dist');
 
+// URL del gateway inyectada en runtime (sin rebuild). Render Docker no pasa
+// VITE_* al build, así que server.js embebe el valor en el HTML que sirve.
+const gatewayUrl = (process.env.GATEWAY_URL || '').replace(/\/+$/, '');
+const runtimeConfigScript = gatewayUrl
+  ? `<script>window.__API_BASE_URL__ = ${JSON.stringify(gatewayUrl)};</script>`
+  : `<!-- GATEWAY_URL no definido; el front usa fallback local -->`;
+
 const contentTypes = {
     '.css': 'text/css',
     '.html': 'text/html',
@@ -19,6 +26,10 @@ const contentTypes = {
     '.png': 'image/png',
     '.svg': 'image/svg+xml',
 };
+
+function injectRuntimeConfig(html) {
+    return html.replace('</head>', `${runtimeConfigScript}</head>`);
+}
 
 const server = http.createServer(async (req, res) => {
     if (!req.url || req.url.startsWith('/socket.io/')) {
@@ -46,12 +57,17 @@ const server = http.createServer(async (req, res) => {
         const file = await readFile(requestedFile);
         const contentType = contentTypes[path.extname(requestedFile)] || 'application/octet-stream';
         res.writeHead(200, { 'Content-Type': contentType });
-        res.end(file);
+        if (requestedFile.endsWith('index.html')) {
+            const html = injectRuntimeConfig(file.toString());
+            res.end(html);
+        } else {
+            res.end(file);
+        }
     } catch {
         try {
             const index = await readFile(path.join(distPath, 'index.html'));
             res.writeHead(200, { 'Content-Type': 'text/html' });
-            res.end(index);
+            res.end(injectRuntimeConfig(index.toString()));
         } catch {
             res.writeHead(200, { 'Content-Type': 'text/plain' });
             res.end('Servidor HTTP en funcionamiento\n');
