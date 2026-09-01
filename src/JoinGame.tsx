@@ -107,6 +107,11 @@ const JoinGame: React.FC = () => {
 
     const id = joinedGameId;
 
+    const rejoinLobby = () => {
+      socket.emit('joinGame', id);
+      void fetchLobbyStatus(id);
+    };
+
     const handleNewGame = () => {
       setLobbyOpen(false);
       openStatus();
@@ -120,19 +125,38 @@ const JoinGame: React.FC = () => {
     };
 
     socket.emit('joinGame', id);
+    socket.on('connect', rejoinLobby);
     socket.on('newGame', handleNewGame);
     socket.on('gameUpdated', handleGameUpdated);
     void fetchLobbyStatus(id);
 
+    // Sin polling: el lobby se actualiza por socket (`gameUpdated` cuando se
+    // incorpora un jugador / `newGame` cuando el host inicia) y al volver a la
+    // pestaña. Respaldo lento solo si el socket está desconectado, para no
+    // golpear la API (hosting free).
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        void fetchLobbyStatus(id);
+      }
+    };
+    const handleFocus = () => void fetchLobbyStatus(id);
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', handleFocus);
+
     const lobbyInterval = window.setInterval(() => {
-      void fetchLobbyStatus(id);
-    }, 3000);
+      if (!socket.connected) {
+        void fetchLobbyStatus(id);
+      }
+    }, 20000);
 
     return () => {
-      window.clearInterval(lobbyInterval);
+      socket.off('connect', rejoinLobby);
       socket.emit('leaveGame', id);
       socket.off('newGame', handleNewGame);
       socket.off('gameUpdated', handleGameUpdated);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleFocus);
+      window.clearInterval(lobbyInterval);
     };
   }, [lobbyOpen, joinedGameId, fetchLobbyStatus, openStatus]);
 

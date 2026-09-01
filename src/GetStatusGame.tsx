@@ -400,7 +400,10 @@ const GameStatusButton: React.FC = () => {
     setGateUntil(0);
     void fetchGameStatus();
 
-    const rejoinGame = () => socket.emit("joinGame", gameId);
+    const rejoinGame = () => {
+      socket.emit("joinGame", gameId);
+      void fetchGameStatus();
+    };
 
     const handleGameUpdated = ({
       gameId: updatedGameId,
@@ -414,21 +417,36 @@ const GameStatusButton: React.FC = () => {
 
     // Entramos a la sala del juego. Socket.IO pierde la membresía de las salas
     // cuando el cliente se reconecta (servidor reiniciado / red cortada / tab
-    // dormida), así que nos volvemos a unir en cada evento `connect`.
+    // dormida), así que nos volvemos a unir y refrescamos en cada `connect`.
     socket.emit("joinGame", gameId);
     socket.on("connect", rejoinGame);
     socket.on("gameUpdated", handleGameUpdated);
 
-    // Refresco periódico de respaldo: garantiza que el tablero se actualice
-    // en vivo aunque el evento socket se pierda por completo.
+    // Sin polling agresivo: la fuente primaria de actualizaciones en vivo es
+    // el socket (`gameUpdated`). El respaldo refresca solo al volver a la
+    // pestaña y, como última red de seguridad, cada 20s PERO únicamente si el
+    // socket está desconectado — así no golpeamos la API (hosting free).
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        void fetchGameStatus();
+      }
+    };
+    const handleFocus = () => void fetchGameStatus();
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("focus", handleFocus);
+
     const statusInterval = window.setInterval(() => {
-      void fetchGameStatus();
-    }, 3000);
+      if (!socket.connected) {
+        void fetchGameStatus();
+      }
+    }, 20000);
 
     return () => {
       socket.off("connect", rejoinGame);
       socket.emit("leaveGame", gameId);
       socket.off("gameUpdated", handleGameUpdated);
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("focus", handleFocus);
       window.clearInterval(statusInterval);
     };
   }, [fetchGameStatus, statusOpen, currentGameId]);

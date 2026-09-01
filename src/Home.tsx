@@ -23,8 +23,19 @@ const Home: React.FC = () => {
       }
     };
     checkSession();
-    const interval = window.setInterval(checkSession, 2000);
-    return () => window.clearInterval(interval);
+    // Chequeo barato (solo lee la cookie, sin requests): lo corremos al volver
+    // a la pestaña en vez de en un timer que corre constantemente.
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        checkSession();
+      }
+    };
+    window.addEventListener('focus', checkSession);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      window.removeEventListener('focus', checkSession);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, []);
 
   return (
