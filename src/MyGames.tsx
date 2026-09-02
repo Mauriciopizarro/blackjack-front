@@ -41,6 +41,12 @@ const MyGames: React.FC = () => {
           redirectToLogin();
           return;
         }
+        // 429: rate limit del hosting free del downstream. Silencioso: la
+        // lista se refresca por socket/visibility y setear un error acá
+        // solo asustaría en el modal.
+        if (response.status === 429) {
+          return;
+        }
         throw new Error('Error fetching games');
       }
       const data = await response.json();
