@@ -308,6 +308,10 @@ const GameStatusButton: React.FC = () => {
   // esté activo, el respaldo por polling no llama a la API para no agravar
   // el límite. Los errores puntuales de acciones sí muestran su toast.
   const rateLimitUntilRef = React.useRef(0);
+  // Coalescing del fetch disparado por socket `gameUpdated`: durante una
+  // acción (deal/stand/bet) el evento puede llegar varias veces seguidas;
+  // separamos los /game/status por 800ms para no golpear el downstream.
+  const lastSocketStatusFetchAtRef = React.useRef(0);
   const { currentGameId, statusOpen, closeStatus } = useGame();
   const playerId = getUserIdFromCookies();
 
@@ -424,7 +428,12 @@ const GameStatusButton: React.FC = () => {
       gameId?: string;
     }) => {
       if (updatedGameId === gameId) {
-        void fetchGameStatus();
+        // Coalescing: un solo /game/status por ráfaga de eventos.
+        const now = Date.now();
+        if (now - lastSocketStatusFetchAtRef.current >= 800) {
+          lastSocketStatusFetchAtRef.current = now;
+          void fetchGameStatus();
+        }
       }
     };
 

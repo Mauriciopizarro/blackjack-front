@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { API_BASE_URL } from './config';
 import './PlayerHistoryGames.css';
 import { getUserIdFromCookies } from './utils/GetUserIdFromCookies';
 import { getTokenFromCookies } from './utils/GetTokenFromCookies';
 import { createSocket } from './utils/socket';
 import { isSessionExpired, redirectToLogin } from './utils/session';
+import { fetchWithRetry } from './utils/http';
 import Skeleton, { SkeletonTheme } from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 
@@ -16,46 +17,69 @@ interface Game {
 
 const socket = createSocket();
 
+// Los eventos `newGame` se emiten en cada creación/start de partida y llegan
+// a TODOS los clientes. Sin este mínimo de separación (2s), una ráfaga de
+// acciones dispararía N fetches de /player/history en cada pestaña abierta
+// (el hosting free de Render responde 429 ante ráfagas).
+const SOCKET_REFETCH_MIN_GAP_MS = 2000;
+
 const PlayerHistoryGames: React.FC = () => {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const lastFetchRef = useRef(0);
 
-  useEffect(() => {
+  const fetchGames = useCallback(async () => {
+    const now = Date.now();
+    if (now - lastFetchRef.current < SOCKET_REFETCH_MIN_GAP_MS) {
+      return; // coalescing: ya se refrescó hace poco (evento socket redundante)
+    }
+    lastFetchRef.current = now;
+
     const playerId = getUserIdFromCookies();
     const token = getTokenFromCookies();
     if (!playerId || !token) {
       redirectToLogin();
       return;
     }
-    const fetchGames = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/player/history/${playerId}`);
-        if (!response.ok || !playerId) {
-          if (isSessionExpired(response.status)) {
-            redirectToLogin();
-            return;
-          }
-          throw new Error('Error fetching data');
+    try {
+      const response = await fetchWithRetry(`${API_BASE_URL}/player/history/${playerId}`, undefined, {
+        attempts: 4,
+      });
+      if (!response.ok) {
+        if (isSessionExpired(response.status)) {
+          redirectToLogin();
+          return;
         }
-        const data = await response.json();
-        const results = Array.isArray(data.results) ? data.results : [];
-        const latestGames = [...results].reverse().slice(0, 5);
-        setGames(latestGames);
-      } catch (err) {
-        setError('Failed to fetch game history');
-      } finally {
-        setLoading(false);
+        // 429/502/503: servicio downstream despertando/saturado. Silencioso:
+        // el error ya lo maneja el retry y la lista vieja sigue visible.
+        if (response.status === 429 || response.status === 502 || response.status === 503) {
+          return;
+        }
+        throw new Error('Error fetching data');
       }
-    };
+      const data = await response.json();
+      const results = Array.isArray(data.results) ? data.results : [];
+      const latestGames = [...results].reverse().slice(0, 5);
+      setGames(latestGames);
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        return;
+      }
+      setError('Failed to fetch game history');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
+  useEffect(() => {
     socket.on('newGame', fetchGames);
-    fetchGames();
+    void fetchGames();
 
     return () => {
       socket.off('newGame', fetchGames);
     };
-  }, []);
+  }, [fetchGames]);
 
   if (loading) {
     return (

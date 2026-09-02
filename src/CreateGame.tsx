@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import type { Socket } from 'socket.io-client';
 import { createSocket } from './utils/socket';
 import { isSessionExpired, redirectToLogin } from './utils/session';
+import { fetchWithRetry } from './utils/http';
 import { useGame } from './GameContext';
 
 Modal.setAppElement('#root');
@@ -38,7 +39,7 @@ const CreateGame: React.FC = () => {
 
         if (token && socketRef.current) {
             try {
-                const response = await fetch(`${API_BASE_URL}/game/create`, {
+                const response = await fetchWithRetry(`${API_BASE_URL}/game/create`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -89,7 +90,7 @@ const CreateGame: React.FC = () => {
         setStarting(true);
         try {
             const token = getTokenFromCookies();
-            const response = await fetch(`${API_BASE_URL}/game/start/${gameInfo.id}`, {
+            const response = await fetchWithRetry(`${API_BASE_URL}/game/start/${gameInfo.id}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

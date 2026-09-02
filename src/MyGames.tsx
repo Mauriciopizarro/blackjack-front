@@ -3,6 +3,7 @@ import { API_BASE_URL } from './config';
 import { getUserIdFromCookies } from './utils/GetUserIdFromCookies';
 import { getTokenFromCookies } from './utils/GetTokenFromCookies';
 import { isSessionExpired, redirectToLogin } from './utils/session';
+import { fetchWithRetry } from './utils/http';
 import { useGame } from './GameContext';
 import Modal from 'react-modal';
 import { createSocket } from './utils/socket';
@@ -18,6 +19,13 @@ interface LobbyItem {
 
 const socket = createSocket();
 
+// El modal escucha eventos globales (`newGame`/`gameUpdated`) que llegan a
+// todos los clientes ante cualquier acción en cualquier partida. Este mínimo
+// de separación (2s) colapsa la ráfaga: si un evento llega justo después de
+// un fetch, se descarta (el hosting free de Render responde 429 ante
+// ráfagas de /game/lobby/list).
+const SOCKET_REFETCH_MIN_GAP_MS = 2000;
+
 const MyGames: React.FC = () => {
   const { setCurrentGameId, openStatus } = useGame();
   const [open, setOpen] = useState(false);
@@ -25,8 +33,15 @@ const MyGames: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const loadedRef = useRef(false);
+  const lastFetchAtRef = useRef(0);
 
-  const fetchGames = useCallback(async () => {
+  const fetchGames = useCallback(async (force = false) => {
+    const now = Date.now();
+    if (!force && now - lastFetchAtRef.current < SOCKET_REFETCH_MIN_GAP_MS) {
+      return; // coalescing: evento socket redundante justo después del último fetch
+    }
+    lastFetchAtRef.current = now;
+
     const playerId = getUserIdFromCookies();
     const token = getTokenFromCookies();
     if (!playerId || !token) {
@@ -35,7 +50,9 @@ const MyGames: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/game/lobby/list/${playerId}`);
+      const response = await fetchWithRetry(`${API_BASE_URL}/game/lobby/list/${playerId}`, undefined, {
+        attempts: 4,
+      });
       if (!response.ok) {
         if (isSessionExpired(response.status)) {
           redirectToLogin();
@@ -77,7 +94,7 @@ const MyGames: React.FC = () => {
     if (!open) {
       return;
     }
-    void fetchGames();
+    void fetchGames(true);
 
     const handleUpdate = () => void fetchGames();
     socket.on('newGame', handleUpdate);
@@ -115,7 +132,7 @@ const MyGames: React.FC = () => {
           className="my-games-button"
           onClick={() => {
             setOpen(true);
-            void fetchGames();
+            void fetchGames(true);
           }}
         >
           My Games

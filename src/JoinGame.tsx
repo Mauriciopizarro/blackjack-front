@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { API_BASE_URL } from './config';
 import Modal from 'react-modal';
 import './JoinGame.css';
@@ -7,11 +7,17 @@ import { getUserIdFromCookies } from './utils/GetUserIdFromCookies';
 import { toast } from 'sonner';
 import { createSocket } from './utils/socket';
 import { isSessionExpired, redirectToLogin } from './utils/session';
+import { fetchWithRetry } from './utils/http';
 import { useGame } from './GameContext';
 
 Modal.setAppElement('#root');
 
 const socket = createSocket();
+
+// Varias vías refrescan el lobby (eventos socket `gameUpdated`/`connect`,
+// focus, visibility). Separamos las llamadas por 2s para no golpear el
+// downstream con ráfagas (hosting free => 429).
+const SOCKET_REFETCH_MIN_GAP_MS = 2000;
 
 interface LobbyPlayer {
   id: string;
@@ -39,12 +45,19 @@ const JoinGame: React.FC = () => {
   const [lobbyStatus, setLobbyStatus] = useState('');
   const userId = getUserIdFromCookies();
   const { setCurrentGameId, openStatus } = useGame();
+  const lastLobbyFetchAtRef = useRef(0);
 
   const handleJoinClick = () => {
     setIsOpen(true);
   };
 
-  const fetchLobbyStatus = useCallback(async (id: string) => {
+  const fetchLobbyStatus = useCallback(async (id: string, force = false) => {
+    const now = Date.now();
+    if (!force && now - lastLobbyFetchAtRef.current < SOCKET_REFETCH_MIN_GAP_MS) {
+      return; // coalescing: evento socket/focus redundante
+    }
+    lastLobbyFetchAtRef.current = now;
+
     const token = getTokenFromCookies();
     if (!token) {
       redirectToLogin();
@@ -52,12 +65,14 @@ const JoinGame: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/game/lobby/${id}`, {
+      const response = await fetchWithRetry(`${API_BASE_URL}/game/lobby/${id}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
+      }, {
+        attempts: 3,
       });
 
       if (!response.ok) {
@@ -128,7 +143,7 @@ const JoinGame: React.FC = () => {
     socket.on('connect', rejoinLobby);
     socket.on('newGame', handleNewGame);
     socket.on('gameUpdated', handleGameUpdated);
-    void fetchLobbyStatus(id);
+    void fetchLobbyStatus(id, true);
 
     // Sin polling: el lobby se actualiza por socket (`gameUpdated` cuando se
     // incorpora un jugador / `newGame` cuando el host inicia) y al volver a la
