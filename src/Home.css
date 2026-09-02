@@ -51,12 +51,7 @@
         display: none !important;
     }
 
-    /* Hide player history panel on mobile (accessible via My Games) */
-    .player-history {
-        display: none !important;
-    }
-
-    /* Hamburger button — fixed at top-center */
+    /* Hamburger button — fixed at top-right */
     .hamburger-button {
         display: flex;
         flex-direction: column;
@@ -64,8 +59,7 @@
         align-items: center;
         position: fixed;
         top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
+        right: 22px;
         z-index: 100;
         width: 56px;
         height: 56px;
@@ -81,7 +75,7 @@
 
     .hamburger-button:hover {
         background-color: #fff;
-        transform: translateX(-50%) scale(1.05);
+        transform: scale(1.05);
     }
 
     .hamburger-button:focus-visible {
@@ -115,15 +109,14 @@
         display: block;
         position: fixed;
         top: 88px;
-        left: 50%;
-        transform: translateX(-50%);
+        right: 22px;
         z-index: 99;
         background-color: #1c1c1c;
         border-radius: 12px;
         padding: 12px;
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
         min-width: 220px;
-        max-width: calc(100vw - 32px);
+        max-width: 260px;
     }
 
     .mobile-menu-content {
