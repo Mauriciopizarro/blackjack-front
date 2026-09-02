@@ -304,6 +304,10 @@ const GameStatusButton: React.FC = () => {
   // Espejo del último gameStatus aplicado; lo usa computeGateMs para
   // comparar instantáneas sin depender de closures stale.
   const gameStatusRef = React.useRef<GameStatus | null>(null);
+  // Backoff ante 429 (rate limit del hosting free del downstream): mientras
+  // esté activo, el respaldo por polling no llama a la API para no agravar
+  // el límite. Los errores puntuales de acciones sí muestran su toast.
+  const rateLimitUntilRef = React.useRef(0);
   const { currentGameId, statusOpen, closeStatus } = useGame();
   const playerId = getUserIdFromCookies();
 
@@ -352,6 +356,15 @@ const GameStatusButton: React.FC = () => {
         method: "GET",
         headers,
       });
+
+      // 429 = rate limit del downstream (hosting free): pausa silenciosa del
+      // polling — sin toast, que el propio intervalo de respaldo reintenta
+      // pasado el backoff y spamearlo solo agrava el límite.
+      if (response.status === 429) {
+        rateLimitUntilRef.current = Date.now() + 30000;
+        console.warn("Downstream rate-limited (429); pausing status polling for 30s");
+        return null;
+      }
 
       const responseData = await response.json();
 
@@ -436,7 +449,7 @@ const GameStatusButton: React.FC = () => {
     window.addEventListener("focus", handleFocus);
 
     const statusInterval = window.setInterval(() => {
-      if (!socket.connected) {
+      if (!socket.connected && Date.now() >= rateLimitUntilRef.current) {
         void fetchGameStatus();
       }
     }, 20000);
