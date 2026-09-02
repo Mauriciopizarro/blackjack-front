@@ -73,7 +73,8 @@ const Home: React.FC = () => {
     return (
       <div className='home'>
         <GameProvider>
-          <GameStatusButton />
+                    <GameStatusButton />
+          <PlayerHistoryGames />
 
           {/* Hamburger button — colapsa todos los botones en un "sandwich" */}
           <button
