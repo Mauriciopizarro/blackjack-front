@@ -5,7 +5,7 @@ import { getUserIdFromCookies } from './utils/GetUserIdFromCookies';
 import { getTokenFromCookies } from './utils/GetTokenFromCookies';
 import { createSocket } from './utils/socket';
 import { isSessionExpired, redirectToLogin } from './utils/session';
-import { fetchWithRetry } from './utils/http';
+import { fetchDeduped } from './utils/http';
 import Skeleton, { SkeletonTheme } from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 
@@ -43,7 +43,7 @@ const PlayerHistoryGames: React.FC = () => {
       return;
     }
     try {
-      const response = await fetchWithRetry(`${API_BASE_URL}/player/history/${playerId}`, undefined, {
+      const response = await fetchDeduped(`${API_BASE_URL}/player/history/${playerId}`, undefined, {
         attempts: 4,
       });
       if (!response.ok) {

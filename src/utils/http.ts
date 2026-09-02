@@ -84,3 +84,56 @@ export const fetchWithRetry = async (
 
   return lastResponse as Response;
 };
+
+/**
+ * Dedup in-flight: las llamadas GET concurrentes al MISMO endpoint (misma URL
+ * y opciones) comparten UNA sola petición de red.
+ *
+ * Es la pieza que elimina las ráfagas de raíz en el frontend: varios
+ * componentes (MyGames/History/Status) pueden disparar el mismo GET en la
+ * misma ventana de tiempo (eventos socket globales + focus + visibility) y
+ * sin esto cada uno abriría su propia petición. Cada caller recibe su propio
+ * `Response` (clon), así nadie compite por leer el body.
+ */
+const dedupeMap = new Map<string, { callers: number; responsePromise: Promise<Response> }>();
+
+const dedupeKey = (url: string, init?: RequestInit): string => {
+  const method = init?.method ?? 'GET';
+  return `${method}|${url}`;
+};
+
+export const fetchDeduped = (
+  url: string,
+  init?: RequestInit,
+  options?: FetchWithRetryOptions,
+): Promise<Response> => {
+  // Solo deduplicamos GETs: mutaciones deben llegar siempre al servidor.
+  const method = init?.method ?? 'GET';
+  const key = dedupeKey(url, init);
+
+  if (method === 'GET') {
+    const existing = dedupeMap.get(key);
+    if (existing) {
+      existing.callers += 1;
+      return existing.responsePromise.then((response) => response.clone());
+    }
+  }
+
+  const entry = {
+    callers: 1,
+    responsePromise: fetchWithRetry(url, init, options),
+  };
+  if (method === 'GET') {
+    dedupeMap.set(key, entry);
+  }
+
+  const settle = () => {
+    entry.callers -= 1;
+    if (entry.callers <= 0) {
+      dedupeMap.delete(key);
+    }
+  };
+  entry.responsePromise.then(settle, settle);
+
+  return entry.responsePromise;
+};

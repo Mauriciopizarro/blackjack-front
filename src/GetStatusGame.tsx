@@ -7,6 +7,7 @@ import { getUserIdFromCookies } from "./utils/GetUserIdFromCookies";
 import "./GetStatusGame.css";
 import { createSocket } from "./utils/socket";
 import { isSessionExpired, redirectToLogin } from "./utils/session";
+import { fetchDeduped } from "./utils/http";
 import { useGame } from "./GameContext";
 // Cartas locales: Vite las importa estáticamente, las cachea con hash de
 // contenido y las sirve desde el mismo origen (sin dependencia de CDNs externos).
@@ -356,7 +357,7 @@ const GameStatusButton: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/game/status/${gameId}`, {
+      const response = await fetchDeduped(`${API_BASE_URL}/game/status/${gameId}`, {
         method: "GET",
         headers,
       });

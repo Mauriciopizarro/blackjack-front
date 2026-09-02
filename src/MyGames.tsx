@@ -3,7 +3,7 @@ import { API_BASE_URL } from './config';
 import { getUserIdFromCookies } from './utils/GetUserIdFromCookies';
 import { getTokenFromCookies } from './utils/GetTokenFromCookies';
 import { isSessionExpired, redirectToLogin } from './utils/session';
-import { fetchWithRetry } from './utils/http';
+import { fetchDeduped } from './utils/http';
 import { useGame } from './GameContext';
 import Modal from 'react-modal';
 import { createSocket } from './utils/socket';
@@ -50,7 +50,7 @@ const MyGames: React.FC = () => {
     }
 
     try {
-      const response = await fetchWithRetry(`${API_BASE_URL}/game/lobby/list/${playerId}`, undefined, {
+      const response = await fetchDeduped(`${API_BASE_URL}/game/lobby/list/${playerId}`, undefined, {
         attempts: 4,
       });
       if (!response.ok) {

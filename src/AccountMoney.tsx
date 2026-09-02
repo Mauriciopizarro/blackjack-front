@@ -8,7 +8,7 @@ import { faDollarSign } from '@fortawesome/free-solid-svg-icons';
 import { getUserIdFromCookies } from './utils/GetUserIdFromCookies';
 import { getTokenFromCookies } from './utils/GetTokenFromCookies';
 import { isSessionExpired, redirectToLogin } from './utils/session';
-import { fetchWithRetry } from './utils/http';
+import { fetchDeduped } from './utils/http';
 
 Modal.setAppElement('#root'); // Asegúrate de que el ID coincida con el de tu div principal en index.html
 
@@ -30,7 +30,7 @@ const WalletButton: React.FC = () => {
       return;
     }
     try {
-        const response = await fetchWithRetry(`${API_BASE_URL}/wallet/get/${playerId}`, {
+        const response = await fetchDeduped(`${API_BASE_URL}/wallet/get/${playerId}`, {
             headers: {
                 Authorization: `Bearer ${token}`
             }

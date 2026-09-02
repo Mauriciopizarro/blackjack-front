@@ -7,7 +7,7 @@ import { getUserIdFromCookies } from './utils/GetUserIdFromCookies';
 import { toast } from 'sonner';
 import { createSocket } from './utils/socket';
 import { isSessionExpired, redirectToLogin } from './utils/session';
-import { fetchWithRetry } from './utils/http';
+import { fetchDeduped } from './utils/http';
 import { useGame } from './GameContext';
 
 Modal.setAppElement('#root');
@@ -65,7 +65,7 @@ const JoinGame: React.FC = () => {
     }
 
     try {
-      const response = await fetchWithRetry(`${API_BASE_URL}/game/lobby/${id}`, {
+      const response = await fetchDeduped(`${API_BASE_URL}/game/lobby/${id}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
